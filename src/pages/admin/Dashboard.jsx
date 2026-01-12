@@ -282,30 +282,25 @@ const Dashboard = () => {
           </div>
           <div className="form-group full-width">
             <label>Avatar / Foto de Perfil</label>
-            <div style={{ marginBottom: '10px' }}>
-              <input
-                key={fileInputKey}
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                disabled={uploading}
-                style={{ marginBottom: '10px' }}
-              />
-              {uploading && <span style={{ marginLeft: '10px', color: '#667eea' }}>Subiendo...</span>}
-            </div>
-            <input
-              type="url"
-              value={formData.avatar}
-              onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
-              placeholder="O ingresa una URL de imagen"
-            />
             {formData.avatar && (
-              <div style={{ marginTop: '10px' }}>
+              <div style={{ marginBottom: '15px' }}>
                 <img 
                   src={formData.avatar} 
-                  alt="Preview" 
-                  style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover' }}
+                  alt="Avatar actual" 
+                  style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #667eea' }}
                 />
+              </div>
+            )}
+            <input
+              key={fileInputKey}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              disabled={uploading}
+            />
+            {uploading && (
+              <div style={{ marginTop: '10px', color: '#667eea', fontWeight: 'bold' }}>
+                ⏳ Subiendo imagen...
               </div>
             )}
           </div>
