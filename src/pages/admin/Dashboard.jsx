@@ -23,6 +23,12 @@ const Dashboard = () => {
   const [uploading, setUploading] = useState(false);
   const [fileInputKey, setFileInputKey] = useState(Date.now());
 
+  // Estado del formulario de proyectos para persistir durante upload
+  const [projectEditForm, setProjectEditForm] = useState(null);
+  const [projectIsAdding, setProjectIsAdding] = useState(false);
+  const [uploadingProjectImage, setUploadingProjectImage] = useState(false);
+  const [projectImageKey, setProjectImageKey] = useState(Date.now());
+
   // Sincronizar personalFormData cuando portfolioData cambie
   React.useEffect(() => {
     if (portfolioData?.personalInfo) {
@@ -486,10 +492,6 @@ const Dashboard = () => {
   // Componente para editar proyectos con upload de imágenes
   const ProjectsEditor = () => {
     const [items, setItems] = useState(portfolioData.projects || []);
-    const [isAdding, setIsAdding] = useState(false);
-    const [editForm, setEditForm] = useState(null);
-    const [uploadingProjectImage, setUploadingProjectImage] = useState(false);
-    const [projectImageKey, setProjectImageKey] = useState(Date.now());
 
     const handleAdd = () => {
       const newProject = {
@@ -501,25 +503,25 @@ const Dashboard = () => {
         demo: '',
         featured: false
       };
-      setEditForm(newProject);
-      setIsAdding(true);
+      setProjectEditForm(newProject);
+      setProjectIsAdding(true);
     };
 
     const handleEdit = (item) => {
-      setEditForm(item);
-      setIsAdding(false);
+      setProjectEditForm(item);
+      setProjectIsAdding(false);
     };
 
     const handleSave = () => {
-      if (isAdding) {
-        addItem('projects', editForm);
+      if (projectIsAdding) {
+        addItem('projects', projectEditForm);
         showSuccess('Proyecto agregado');
       } else {
-        updateItem('projects', editForm.id, editForm);
+        updateItem('projects', projectEditForm.id, projectEditForm);
         showSuccess('Proyecto actualizado');
       }
-      setEditForm(null);
-      setIsAdding(false);
+      setProjectEditForm(null);
+      setProjectIsAdding(false);
       setItems(portfolioData.projects || []);
       setProjectImageKey(Date.now());
     };
@@ -575,7 +577,7 @@ const Dashboard = () => {
           .from('portfolio-images')
           .getPublicUrl(filePath);
 
-        setEditForm(prev => ({ ...prev, image: urlData.publicUrl }));
+        setProjectEditForm(prev => ({ ...prev, image: urlData.publicUrl }));
         showSuccess('Imagen subida correctamente');
       } catch (error) {
         showError(error.message || 'Error al subir la imagen');
@@ -594,25 +596,25 @@ const Dashboard = () => {
           </button>
         </div>
 
-        {editForm && (
+        {projectEditForm && (
           <div className="edit-form-overlay">
             <div className="edit-form-modal">
-              <h4>{isAdding ? 'Agregar Proyecto' : 'Editar Proyecto'}</h4>
+              <h4>{projectIsAdding ? 'Agregar Proyecto' : 'Editar Proyecto'}</h4>
               
               <div className="form-group">
                 <label>Título</label>
                 <input
                   type="text"
-                  value={editForm.title || ''}
-                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  value={projectEditForm.title || ''}
+                  onChange={(e) => setProjectEditForm({ ...projectEditForm, title: e.target.value })}
                 />
               </div>
 
               <div className="form-group">
                 <label>Descripción</label>
                 <textarea
-                  value={editForm.description || ''}
-                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  value={projectEditForm.description || ''}
+                  onChange={(e) => setProjectEditForm({ ...projectEditForm, description: e.target.value })}
                   rows="3"
                 />
               </div>
@@ -621,9 +623,9 @@ const Dashboard = () => {
                 <label>Tecnologías (separadas por comas)</label>
                 <input
                   type="text"
-                  value={(editForm.technologies || []).join(', ')}
-                  onChange={(e) => setEditForm({
-                    ...editForm,
+                  value={(projectEditForm.technologies || []).join(', ')}
+                  onChange={(e) => setProjectEditForm({
+                    ...projectEditForm,
                     technologies: e.target.value.split(',').map(s => s.trim())
                   })}
                   placeholder="React, Node.js, MongoDB"
@@ -632,10 +634,10 @@ const Dashboard = () => {
 
               <div className="form-group">
                 <label>Imagen del Proyecto</label>
-                {editForm.image && (
+                {projectEditForm.image && (
                   <div style={{ marginBottom: '15px' }}>
                     <img 
-                      src={editForm.image} 
+                      src={projectEditForm.image} 
                       alt="Preview" 
                       style={{ width: '100%', maxWidth: '400px', borderRadius: '8px', objectFit: 'cover' }}
                     />
@@ -659,8 +661,8 @@ const Dashboard = () => {
                 <label>GitHub URL (opcional)</label>
                 <input
                   type="url"
-                  value={editForm.github || ''}
-                  onChange={(e) => setEditForm({ ...editForm, github: e.target.value })}
+                  value={projectEditForm.github || ''}
+                  onChange={(e) => setProjectEditForm({ ...projectEditForm, github: e.target.value })}
                   placeholder="https://github.com/usuario/proyecto"
                 />
                 <small style={{ color: '#666', fontSize: '0.85rem' }}>Déjalo vacío si no aplica</small>
@@ -670,8 +672,8 @@ const Dashboard = () => {
                 <label>Demo URL (opcional)</label>
                 <input
                   type="url"
-                  value={editForm.demo || ''}
-                  onChange={(e) => setEditForm({ ...editForm, demo: e.target.value })}
+                  value={projectEditForm.demo || ''}
+                  onChange={(e) => setProjectEditForm({ ...projectEditForm, demo: e.target.value })}
                   placeholder="https://demo.com"
                 />
                 <small style={{ color: '#666', fontSize: '0.85rem' }}>Déjalo vacío si no aplica</small>
@@ -681,8 +683,8 @@ const Dashboard = () => {
                 <label style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <input
                     type="checkbox"
-                    checked={editForm.featured || false}
-                    onChange={(e) => setEditForm({ ...editForm, featured: e.target.checked })}
+                    checked={projectEditForm.featured || false}
+                    onChange={(e) => setProjectEditForm({ ...projectEditForm, featured: e.target.checked })}
                   />
                   Proyecto Destacado
                 </label>
@@ -692,7 +694,7 @@ const Dashboard = () => {
                 <button onClick={handleSave} className="btn btn-primary">
                   <FaSave /> Guardar
                 </button>
-                <button onClick={() => { setEditForm(null); setIsAdding(false); setProjectImageKey(Date.now()); }} className="btn btn-secondary">
+                <button onClick={() => { setProjectEditForm(null); setProjectIsAdding(false); setProjectImageKey(Date.now()); }} className="btn btn-secondary">
                   Cancelar
                 </button>
               </div>
