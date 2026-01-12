@@ -90,11 +90,8 @@ const Login = () => {
         </form>
 
         <div className="login-footer">
-          <p className="default-password-notice">
-            <strong>Contraseña por defecto:</strong> admin123
-          </p>
           <p className="security-notice">
-            Por seguridad, cambia tu contraseña después del primer acceso
+            Por seguridad, cambia tu contraseña regularmente desde el panel de administración
           </p>
         </div>
       </motion.div>

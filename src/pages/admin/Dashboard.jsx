@@ -136,6 +136,57 @@ const Dashboard = () => {
   // Componente para editar información personal
   const PersonalInfoEditor = () => {
     const [formData, setFormData] = useState(portfolioData?.personalInfo || {});
+    const [uploading, setUploading] = useState(false);
+
+    const handleImageUpload = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      // Validar tipo de archivo
+      if (!file.type.startsWith('image/')) {
+        showError('Solo se permiten archivos de imagen');
+        return;
+      }
+
+      // Validar tamaño (máximo 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        showError('La imagen no debe superar 2MB');
+        return;
+      }
+
+      setUploading(true);
+      try {
+        const { supabase } = await import('../../config/supabase');
+        
+        // Crear nombre único para el archivo
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+        const filePath = `avatars/${fileName}`;
+
+        // Subir archivo
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('portfolio-images')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) throw uploadError;
+
+        // Obtener URL pública
+        const { data: urlData } = supabase.storage
+          .from('portfolio-images')
+          .getPublicUrl(filePath);
+
+        setFormData({ ...formData, avatar: urlData.publicUrl });
+        showSuccess('Imagen subida correctamente');
+      } catch (error) {
+        console.error('Error al subir imagen:', error);
+        showError('Error al subir la imagen: ' + error.message);
+      } finally {
+        setUploading(false);
+      }
+    };
 
     const handleSubmit = async (e) => {
       e.preventDefault();
@@ -219,12 +270,32 @@ const Dashboard = () => {
             />
           </div>
           <div className="form-group full-width">
-            <label>URL de Avatar</label>
+            <label>Avatar / Foto de Perfil</label>
+            <div style={{ marginBottom: '10px' }}>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={uploading}
+                style={{ marginBottom: '10px' }}
+              />
+              {uploading && <span style={{ marginLeft: '10px', color: '#667eea' }}>Subiendo...</span>}
+            </div>
             <input
               type="url"
               value={formData.avatar}
               onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
+              placeholder="O ingresa una URL de imagen"
             />
+            {formData.avatar && (
+              <div style={{ marginTop: '10px' }}>
+                <img 
+                  src={formData.avatar} 
+                  alt="Preview" 
+                  style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover' }}
+                />
+              </div>
+            )}
           </div>
         </div>
         <button type="submit" className="btn btn-primary">

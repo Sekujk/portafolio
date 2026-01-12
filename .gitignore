@@ -37,3 +37,4 @@ coverage/
 # Archivos personales
 GITHUB.md
 supabase-setup.sql
+supabase-storage.sql
