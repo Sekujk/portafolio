@@ -145,12 +145,14 @@ const Dashboard = () => {
       // Validar tipo de archivo
       if (!file.type.startsWith('image/')) {
         showError('Solo se permiten archivos de imagen');
+        e.target.value = '';
         return;
       }
 
       // Validar tamaño (máximo 2MB)
       if (file.size > 2 * 1024 * 1024) {
         showError('La imagen no debe superar 2MB');
+        e.target.value = '';
         return;
       }
 
@@ -171,7 +173,13 @@ const Dashboard = () => {
             upsert: false
           });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('Error de Supabase:', uploadError);
+          if (uploadError.message.includes('not found') || uploadError.message.includes('does not exist')) {
+            throw new Error('El bucket "portfolio-images" no existe. Ve a Storage en Supabase y créalo como público.');
+          }
+          throw uploadError;
+        }
 
         // Obtener URL pública
         const { data: urlData } = supabase.storage
@@ -180,9 +188,11 @@ const Dashboard = () => {
 
         setFormData({ ...formData, avatar: urlData.publicUrl });
         showSuccess('Imagen subida correctamente');
+        e.target.value = '';
       } catch (error) {
-        console.error('Error al subir imagen:', error);
-        showError('Error al subir la imagen: ' + error.message);
+        console.error('Error completo:', error);
+        showError(error.message || 'Error al subir la imagen');
+        e.target.value = '';
       } finally {
         setUploading(false);
       }
