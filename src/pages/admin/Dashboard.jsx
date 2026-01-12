@@ -139,12 +139,24 @@ const Dashboard = () => {
     const [uploading, setUploading] = useState(false);
     const [fileInputKey, setFileInputKey] = useState(Date.now());
 
+    console.log('🔄 RENDER PersonalInfoEditor');
+    console.log('  📦 formData.avatar:', formData.avatar);
+    console.log('  📦 portfolioData.personalInfo.avatar:', portfolioData?.personalInfo?.avatar);
+    console.log('  📦 uploading:', uploading);
+    console.log('  📦 fileInputKey:', fileInputKey);
+
     const handleImageUpload = async (e) => {
+      console.log('🎬 handleImageUpload INICIADO');
       const file = e.target.files[0];
-      if (!file) return;
+      console.log('  📁 Archivo:', file?.name, 'Tamaño:', file?.size);
+      if (!file) {
+        console.log('  ❌ No hay archivo, saliendo');
+        return;
+      }
 
       // Validar tipo de archivo
       if (!file.type.startsWith('image/')) {
+        console.log('  ❌ Tipo de archivo inválido:', file.type);
         showError('Solo se permiten archivos de imagen');
         setFileInputKey(Date.now());
         return;
@@ -152,12 +164,16 @@ const Dashboard = () => {
 
       // Validar tamaño (máximo 2MB)
       if (file.size > 2 * 1024 * 1024) {
+        console.log('  ❌ Archivo muy grande:', file.size);
         showError('La imagen no debe superar 2MB');
         setFileInputKey(Date.now());
         return;
       }
 
+      console.log('  ✅ Validaciones pasadas, iniciando upload...');
       setUploading(true);
+      console.log('  🔄 uploading = true');
+      
       try {
         const { supabase } = await import('../../config/supabase');
         
@@ -165,6 +181,8 @@ const Dashboard = () => {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
         const filePath = `avatars/${fileName}`;
+
+        console.log('  📤 Subiendo a Supabase:', filePath);
 
         // Subir archivo
         const { data: uploadData, error: uploadError } = await supabase.storage
@@ -175,26 +193,44 @@ const Dashboard = () => {
           });
 
         if (uploadError) {
+          console.log('  ❌ Error al subir:', uploadError);
           if (uploadError.message.includes('not found') || uploadError.message.includes('does not exist')) {
             throw new Error('El bucket "portfolio-images" no existe. Ve a Storage en Supabase y créalo como público.');
           }
           throw uploadError;
         }
 
+        console.log('  ✅ Upload exitoso, data:', uploadData);
+
         // Obtener URL pública
         const { data: urlData } = supabase.storage
           .from('portfolio-images')
           .getPublicUrl(filePath);
 
+        console.log('  🔗 URL pública obtenida:', urlData.publicUrl);
+
         // Actualizar formData sin perder otros campos
-        setFormData(prev => ({ ...prev, avatar: urlData.publicUrl }));
+        console.log('  📝 ANTES de setFormData - formData.avatar:', formData.avatar);
+        setFormData(prev => {
+          console.log('    📝 DENTRO de setFormData callback');
+          console.log('      prev:', JSON.stringify(prev, null, 2));
+          const newData = { ...prev, avatar: urlData.publicUrl };
+          console.log('      newData:', JSON.stringify(newData, null, 2));
+          return newData;
+        });
+        console.log('  ✅ setFormData ejecutado');
+        
         showSuccess('Imagen subida correctamente');
         setFileInputKey(Date.now());
+        console.log('  🔄 fileInputKey actualizado');
       } catch (error) {
+        console.log('  ❌ ERROR CAPTURADO:', error);
         showError(error.message || 'Error al subir la imagen');
         setFileInputKey(Date.now());
       } finally {
         setUploading(false);
+        console.log('  🔄 uploading = false');
+        console.log('🏁 handleImageUpload FINALIZADO');
       }
     };
 
