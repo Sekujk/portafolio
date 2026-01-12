@@ -38,3 +38,4 @@ coverage/
 GITHUB.md
 supabase-setup.sql
 supabase-storage.sql
+supabase-projects-storage.sql

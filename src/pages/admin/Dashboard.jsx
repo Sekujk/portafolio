@@ -656,23 +656,25 @@ const Dashboard = () => {
               </div>
 
               <div className="form-group">
-                <label>GitHub URL</label>
+                <label>GitHub URL (opcional)</label>
                 <input
                   type="url"
                   value={editForm.github || ''}
                   onChange={(e) => setEditForm({ ...editForm, github: e.target.value })}
                   placeholder="https://github.com/usuario/proyecto"
                 />
+                <small style={{ color: '#666', fontSize: '0.85rem' }}>Déjalo vacío si no aplica</small>
               </div>
 
               <div className="form-group">
-                <label>Demo URL</label>
+                <label>Demo URL (opcional)</label>
                 <input
                   type="url"
                   value={editForm.demo || ''}
                   onChange={(e) => setEditForm({ ...editForm, demo: e.target.value })}
                   placeholder="https://demo.com"
                 />
+                <small style={{ color: '#666', fontSize: '0.85rem' }}>Déjalo vacío si no aplica</small>
               </div>
 
               <div className="form-group">
@@ -707,8 +709,8 @@ const Dashboard = () => {
               <div style={{ padding: '15px' }}>
                 <h4>{item.title}</h4>
                 <p>{item.description}</p>
-                {item.technologies && (
-                  <div style={{ marginTop: '10px' }}>
+                {item.technologies && item.technologies.length > 0 && (
+                  <div style={{ marginTop: '10px', marginBottom: '10px' }}>
                     {item.technologies.map((tech, idx) => (
                       <span key={idx} style={{ display: 'inline-block', background: '#f0f0f0', padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem', marginRight: '5px', marginBottom: '5px' }}>
                         {tech}
@@ -716,6 +718,55 @@ const Dashboard = () => {
                     ))}
                   </div>
                 )}
+                
+                {/* Enlaces del proyecto */}
+                {(item.github || item.demo) && (
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '12px', marginBottom: '12px' }}>
+                    {item.github && (
+                      <a 
+                        href={item.github} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{ 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          gap: '5px',
+                          padding: '6px 12px', 
+                          background: '#24292e', 
+                          color: 'white', 
+                          textDecoration: 'none', 
+                          borderRadius: '6px',
+                          fontSize: '0.85rem',
+                          fontWeight: '500'
+                        }}
+                      >
+                        <FaBriefcase /> GitHub
+                      </a>
+                    )}
+                    {item.demo && (
+                      <a 
+                        href={item.demo} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{ 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          gap: '5px',
+                          padding: '6px 12px', 
+                          background: '#667eea', 
+                          color: 'white', 
+                          textDecoration: 'none', 
+                          borderRadius: '6px',
+                          fontSize: '0.85rem',
+                          fontWeight: '500'
+                        }}
+                      >
+                        <FaEye /> Ver Demo
+                      </a>
+                    )}
+                  </div>
+                )}
+                
                 <div className="item-actions">
                   <button onClick={() => handleEdit(item)} className="btn btn-sm btn-primary">
                     Editar
