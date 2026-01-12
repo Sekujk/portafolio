@@ -137,6 +137,7 @@ const Dashboard = () => {
   const PersonalInfoEditor = () => {
     const [formData, setFormData] = useState(portfolioData?.personalInfo || {});
     const [uploading, setUploading] = useState(false);
+    const [fileInputKey, setFileInputKey] = useState(Date.now());
 
     const handleImageUpload = async (e) => {
       const file = e.target.files[0];
@@ -145,14 +146,14 @@ const Dashboard = () => {
       // Validar tipo de archivo
       if (!file.type.startsWith('image/')) {
         showError('Solo se permiten archivos de imagen');
-        e.target.value = '';
+        setFileInputKey(Date.now()); // Resetear input
         return;
       }
 
       // Validar tamaño (máximo 2MB)
       if (file.size > 2 * 1024 * 1024) {
         showError('La imagen no debe superar 2MB');
-        e.target.value = '';
+        setFileInputKey(Date.now()); // Resetear input
         return;
       }
 
@@ -188,11 +189,11 @@ const Dashboard = () => {
 
         setFormData({ ...formData, avatar: urlData.publicUrl });
         showSuccess('Imagen subida correctamente');
-        e.target.value = '';
+        setFileInputKey(Date.now()); // Resetear input después de subida exitosa
       } catch (error) {
         console.error('Error completo:', error);
         showError(error.message || 'Error al subir la imagen');
-        e.target.value = '';
+        setFileInputKey(Date.now()); // Resetear input
       } finally {
         setUploading(false);
       }
@@ -283,6 +284,7 @@ const Dashboard = () => {
             <label>Avatar / Foto de Perfil</label>
             <div style={{ marginBottom: '10px' }}>
               <input
+                key={fileInputKey}
                 type="file"
                 accept="image/*"
                 onChange={handleImageUpload}
