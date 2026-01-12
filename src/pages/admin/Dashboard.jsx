@@ -139,15 +139,21 @@ const Dashboard = () => {
     const [uploading, setUploading] = useState(false);
     const [fileInputKey, setFileInputKey] = useState(Date.now());
 
+    console.log('🔍 PersonalInfoEditor render - formData.avatar:', formData.avatar);
+    console.log('🔍 portfolioData.personalInfo.avatar:', portfolioData?.personalInfo?.avatar);
+
     // Sincronizar formData solo al montar el componente
     React.useEffect(() => {
+      console.log('🎯 useEffect ejecutado - Inicializando formData');
       if (portfolioData?.personalInfo) {
         setFormData(portfolioData.personalInfo);
+        console.log('✅ formData inicializado con:', portfolioData.personalInfo);
       }
     }, []); // Array vacío para que solo se ejecute una vez
 
     const handleImageUpload = async (e) => {
       const file = e.target.files[0];
+      console.log('📁 Archivo seleccionado:', file?.name);
       if (!file) return;
 
       // Validar tipo de archivo
@@ -165,6 +171,7 @@ const Dashboard = () => {
       }
 
       setUploading(true);
+      console.log('⏳ Iniciando upload...');
       try {
         const { supabase } = await import('../../config/supabase');
         
@@ -172,6 +179,8 @@ const Dashboard = () => {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
         const filePath = `avatars/${fileName}`;
+
+        console.log('📤 Subiendo a:', filePath);
 
         // Subir archivo
         const { data: uploadData, error: uploadError } = await supabase.storage
@@ -182,28 +191,38 @@ const Dashboard = () => {
           });
 
         if (uploadError) {
-          console.error('Error de Supabase:', uploadError);
+          console.error('❌ Error de Supabase:', uploadError);
           if (uploadError.message.includes('not found') || uploadError.message.includes('does not exist')) {
             throw new Error('El bucket "portfolio-images" no existe. Ve a Storage en Supabase y créalo como público.');
           }
           throw uploadError;
         }
 
+        console.log('✅ Upload exitoso, obteniendo URL pública...');
+
         // Obtener URL pública
         const { data: urlData } = supabase.storage
           .from('portfolio-images')
           .getPublicUrl(filePath);
 
+        console.log('🔗 URL obtenida:', urlData.publicUrl);
+
         // Actualizar formData sin perder otros campos
-        setFormData(prev => ({ ...prev, avatar: urlData.publicUrl }));
+        setFormData(prev => {
+          console.log('📝 Actualizando formData - prev:', prev);
+          const newData = { ...prev, avatar: urlData.publicUrl };
+          console.log('📝 Nuevo formData:', newData);
+          return newData;
+        });
         showSuccess('Imagen subida correctamente');
         setFileInputKey(Date.now()); // Resetear input después de subida exitosa
       } catch (error) {
-        console.error('Error completo:', error);
+        console.error('❌ Error completo:', error);
         showError(error.message || 'Error al subir la imagen');
         setFileInputKey(Date.now()); // Resetear input
       } finally {
         setUploading(false);
+        console.log('🏁 Upload finalizado');
       }
     };
 
