@@ -483,6 +483,255 @@ const Dashboard = () => {
     );
   };
 
+  // Componente para editar proyectos con upload de imágenes
+  const ProjectsEditor = () => {
+    const [items, setItems] = useState(portfolioData.projects || []);
+    const [isAdding, setIsAdding] = useState(false);
+    const [editForm, setEditForm] = useState(null);
+    const [uploadingProjectImage, setUploadingProjectImage] = useState(false);
+    const [projectImageKey, setProjectImageKey] = useState(Date.now());
+
+    const handleAdd = () => {
+      const newProject = {
+        title: '',
+        description: '',
+        technologies: [],
+        image: '',
+        github: '',
+        demo: '',
+        featured: false
+      };
+      setEditForm(newProject);
+      setIsAdding(true);
+    };
+
+    const handleEdit = (item) => {
+      setEditForm(item);
+      setIsAdding(false);
+    };
+
+    const handleSave = () => {
+      if (isAdding) {
+        addItem('projects', editForm);
+        showSuccess('Proyecto agregado');
+      } else {
+        updateItem('projects', editForm.id, editForm);
+        showSuccess('Proyecto actualizado');
+      }
+      setEditForm(null);
+      setIsAdding(false);
+      setItems(portfolioData.projects || []);
+      setProjectImageKey(Date.now());
+    };
+
+    const handleDelete = (id) => {
+      if (window.confirm('¿Estás seguro de eliminar este proyecto?')) {
+        deleteItem('projects', id);
+        showSuccess('Proyecto eliminado');
+        setItems(portfolioData.projects || []);
+      }
+    };
+
+    const handleImageUpload = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        showError('Solo se permiten archivos de imagen');
+        setProjectImageKey(Date.now());
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        showError('La imagen no debe superar 5MB');
+        setProjectImageKey(Date.now());
+        return;
+      }
+
+      setUploadingProjectImage(true);
+      
+      try {
+        const { supabase } = await import('../../config/supabase');
+        
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+        const filePath = `projects/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('portfolio-images')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          if (uploadError.message.includes('not found') || uploadError.message.includes('does not exist')) {
+            throw new Error('El bucket "portfolio-images" no existe. Ve a Storage en Supabase y créalo como público.');
+          }
+          throw uploadError;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from('portfolio-images')
+          .getPublicUrl(filePath);
+
+        setEditForm(prev => ({ ...prev, image: urlData.publicUrl }));
+        showSuccess('Imagen subida correctamente');
+      } catch (error) {
+        showError(error.message || 'Error al subir la imagen');
+        setProjectImageKey(Date.now());
+      } finally {
+        setUploadingProjectImage(false);
+      }
+    };
+
+    return (
+      <div className="list-editor">
+        <div className="list-header">
+          <h3>Proyectos</h3>
+          <button onClick={handleAdd} className="btn btn-primary btn-sm">
+            <FaPlus /> Agregar Proyecto
+          </button>
+        </div>
+
+        {editForm && (
+          <div className="edit-form-overlay">
+            <div className="edit-form-modal">
+              <h4>{isAdding ? 'Agregar Proyecto' : 'Editar Proyecto'}</h4>
+              
+              <div className="form-group">
+                <label>Título</label>
+                <input
+                  type="text"
+                  value={editForm.title || ''}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Descripción</label>
+                <textarea
+                  value={editForm.description || ''}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  rows="3"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Tecnologías (separadas por comas)</label>
+                <input
+                  type="text"
+                  value={(editForm.technologies || []).join(', ')}
+                  onChange={(e) => setEditForm({
+                    ...editForm,
+                    technologies: e.target.value.split(',').map(s => s.trim())
+                  })}
+                  placeholder="React, Node.js, MongoDB"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Imagen del Proyecto</label>
+                {editForm.image && (
+                  <div style={{ marginBottom: '15px' }}>
+                    <img 
+                      src={editForm.image} 
+                      alt="Preview" 
+                      style={{ width: '100%', maxWidth: '400px', borderRadius: '8px', objectFit: 'cover' }}
+                    />
+                  </div>
+                )}
+                <input
+                  key={projectImageKey}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={uploadingProjectImage}
+                />
+                {uploadingProjectImage && (
+                  <div style={{ marginTop: '10px', color: '#667eea', fontWeight: 'bold' }}>
+                    ⏳ Subiendo imagen...
+                  </div>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label>GitHub URL</label>
+                <input
+                  type="url"
+                  value={editForm.github || ''}
+                  onChange={(e) => setEditForm({ ...editForm, github: e.target.value })}
+                  placeholder="https://github.com/usuario/proyecto"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Demo URL</label>
+                <input
+                  type="url"
+                  value={editForm.demo || ''}
+                  onChange={(e) => setEditForm({ ...editForm, demo: e.target.value })}
+                  placeholder="https://demo.com"
+                />
+              </div>
+
+              <div className="form-group">
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <input
+                    type="checkbox"
+                    checked={editForm.featured || false}
+                    onChange={(e) => setEditForm({ ...editForm, featured: e.target.checked })}
+                  />
+                  Proyecto Destacado
+                </label>
+              </div>
+
+              <div className="modal-actions">
+                <button onClick={handleSave} className="btn btn-primary">
+                  <FaSave /> Guardar
+                </button>
+                <button onClick={() => { setEditForm(null); setIsAdding(false); setProjectImageKey(Date.now()); }} className="btn btn-secondary">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="items-list">
+          {items.map((item) => (
+            <div key={item.id} className="item-card">
+              {item.image && (
+                <img src={item.image} alt={item.title} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '8px 8px 0 0' }} />
+              )}
+              <div style={{ padding: '15px' }}>
+                <h4>{item.title}</h4>
+                <p>{item.description}</p>
+                {item.technologies && (
+                  <div style={{ marginTop: '10px' }}>
+                    {item.technologies.map((tech, idx) => (
+                      <span key={idx} style={{ display: 'inline-block', background: '#f0f0f0', padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem', marginRight: '5px', marginBottom: '5px' }}>
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="item-actions">
+                  <button onClick={() => handleEdit(item)} className="btn btn-sm btn-primary">
+                    Editar
+                  </button>
+                  <button onClick={() => handleDelete(item.id)} className="btn btn-sm btn-danger">
+                    <FaTrash /> Eliminar
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'personal':
@@ -513,19 +762,7 @@ const Dashboard = () => {
       case 'skills':
         return <SkillsEditor />;
       case 'projects':
-        return <ListEditor
-          section="projects"
-          title="Proyecto"
-          fields={[
-            { key: 'title', label: 'Título', type: 'text' },
-            { key: 'description', label: 'Descripción', type: 'textarea' },
-            { key: 'technologies', label: 'Tecnologías', type: 'array' },
-            { key: 'image', label: 'URL de Imagen', type: 'url' },
-            { key: 'github', label: 'GitHub', type: 'url' },
-            { key: 'demo', label: 'Demo', type: 'url' },
-            { key: 'featured', label: 'Destacado', type: 'checkbox' }
-          ]}
-        />;
+        return <ProjectsEditor />;
       case 'certifications':
         return <ListEditor
           section="certifications"
