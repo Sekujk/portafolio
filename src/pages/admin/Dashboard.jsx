@@ -139,6 +139,13 @@ const Dashboard = () => {
     const [uploading, setUploading] = useState(false);
     const [fileInputKey, setFileInputKey] = useState(Date.now());
 
+    // Sincronizar formData solo al montar el componente
+    React.useEffect(() => {
+      if (portfolioData?.personalInfo) {
+        setFormData(portfolioData.personalInfo);
+      }
+    }, []); // Array vacío para que solo se ejecute una vez
+
     const handleImageUpload = async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -187,7 +194,8 @@ const Dashboard = () => {
           .from('portfolio-images')
           .getPublicUrl(filePath);
 
-        setFormData({ ...formData, avatar: urlData.publicUrl });
+        // Actualizar formData sin perder otros campos
+        setFormData(prev => ({ ...prev, avatar: urlData.publicUrl }));
         showSuccess('Imagen subida correctamente');
         setFileInputKey(Date.now()); // Resetear input después de subida exitosa
       } catch (error) {
