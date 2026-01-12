@@ -17,6 +17,19 @@ const Dashboard = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [editingItem, setEditingItem] = useState(null);
+  
+  // Estado del formulario personal movido al nivel del Dashboard para persistir
+  const [personalFormData, setPersonalFormData] = useState(portfolioData?.personalInfo || {});
+  const [uploading, setUploading] = useState(false);
+  const [fileInputKey, setFileInputKey] = useState(Date.now());
+
+  // Sincronizar personalFormData cuando portfolioData cambie
+  React.useEffect(() => {
+    console.log('🔄 Sincronizando personalFormData con portfolioData');
+    if (portfolioData?.personalInfo) {
+      setPersonalFormData(portfolioData.personalInfo);
+    }
+  }, [portfolioData?.personalInfo]);
 
   // Si hay error de conexión, mostrar pantalla de error
   if (connectionError || !portfolioData) {
@@ -135,15 +148,9 @@ const Dashboard = () => {
 
   // Componente para editar información personal
   const PersonalInfoEditor = () => {
-    const [formData, setFormData] = useState(portfolioData?.personalInfo || {});
-    const [uploading, setUploading] = useState(false);
-    const [fileInputKey, setFileInputKey] = useState(Date.now());
-
     console.log('🔄 RENDER PersonalInfoEditor');
-    console.log('  📦 formData.avatar:', formData.avatar);
-    console.log('  📦 portfolioData.personalInfo.avatar:', portfolioData?.personalInfo?.avatar);
+    console.log('  📦 personalFormData.avatar:', personalFormData.avatar);
     console.log('  📦 uploading:', uploading);
-    console.log('  📦 fileInputKey:', fileInputKey);
 
     const handleImageUpload = async (e) => {
       console.log('🎬 handleImageUpload INICIADO');
@@ -172,19 +179,16 @@ const Dashboard = () => {
 
       console.log('  ✅ Validaciones pasadas, iniciando upload...');
       setUploading(true);
-      console.log('  🔄 uploading = true');
       
       try {
         const { supabase } = await import('../../config/supabase');
         
-        // Crear nombre único para el archivo
         const fileExt = file.name.split('.').pop();
         const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
         const filePath = `avatars/${fileName}`;
 
         console.log('  📤 Subiendo a Supabase:', filePath);
 
-        // Subir archivo
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('portfolio-images')
           .upload(filePath, file, {
@@ -200,36 +204,31 @@ const Dashboard = () => {
           throw uploadError;
         }
 
-        console.log('  ✅ Upload exitoso, data:', uploadData);
+        console.log('  ✅ Upload exitoso');
 
-        // Obtener URL pública
         const { data: urlData } = supabase.storage
           .from('portfolio-images')
           .getPublicUrl(filePath);
 
         console.log('  🔗 URL pública obtenida:', urlData.publicUrl);
-
-        // Actualizar formData sin perder otros campos
-        console.log('  📝 ANTES de setFormData - formData.avatar:', formData.avatar);
-        setFormData(prev => {
-          console.log('    📝 DENTRO de setFormData callback');
-          console.log('      prev:', JSON.stringify(prev, null, 2));
+        console.log('  📝 Actualizando personalFormData...');
+        
+        setPersonalFormData(prev => {
+          console.log('    ✅ DENTRO del callback de setPersonalFormData');
+          console.log('    prev.avatar:', prev.avatar);
           const newData = { ...prev, avatar: urlData.publicUrl };
-          console.log('      newData:', JSON.stringify(newData, null, 2));
+          console.log('    newData.avatar:', newData.avatar);
           return newData;
         });
-        console.log('  ✅ setFormData ejecutado');
         
         showSuccess('Imagen subida correctamente');
         setFileInputKey(Date.now());
-        console.log('  🔄 fileInputKey actualizado');
       } catch (error) {
-        console.log('  ❌ ERROR CAPTURADO:', error);
+        console.log('  ❌ ERROR:', error);
         showError(error.message || 'Error al subir la imagen');
         setFileInputKey(Date.now());
       } finally {
         setUploading(false);
-        console.log('  🔄 uploading = false');
         console.log('🏁 handleImageUpload FINALIZADO');
       }
     };
@@ -237,7 +236,7 @@ const Dashboard = () => {
     const handleSubmit = async (e) => {
       e.preventDefault();
       try {
-        await updateSection('personalInfo', formData);
+        await updateSection('personalInfo', personalFormData);
         showSuccess('Información personal actualizada');
       } catch (error) {
         showError('Error al guardar: ' + error.message);
@@ -252,8 +251,8 @@ const Dashboard = () => {
             <label>Nombre Completo</label>
             <input
               type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              value={personalFormData.name}
+              onChange={(e) => setPersonalFormData({ ...personalFormData, name: e.target.value })}
               required
             />
           </div>
@@ -261,8 +260,8 @@ const Dashboard = () => {
             <label>Título Profesional</label>
             <input
               type="text"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              value={personalFormData.title}
+              onChange={(e) => setPersonalFormData({ ...personalFormData, title: e.target.value })}
               required
             />
           </div>
@@ -270,8 +269,8 @@ const Dashboard = () => {
             <label>Email</label>
             <input
               type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              value={personalFormData.email}
+              onChange={(e) => setPersonalFormData({ ...personalFormData, email: e.target.value })}
               required
             />
           </div>
@@ -279,23 +278,23 @@ const Dashboard = () => {
             <label>Teléfono</label>
             <input
               type="tel"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              value={personalFormData.phone}
+              onChange={(e) => setPersonalFormData({ ...personalFormData, phone: e.target.value })}
             />
           </div>
           <div className="form-group">
             <label>Ubicación</label>
             <input
               type="text"
-              value={formData.location}
-              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              value={personalFormData.location}
+              onChange={(e) => setPersonalFormData({ ...personalFormData, location: e.target.value })}
             />
           </div>
           <div className="form-group full-width">
             <label>Biografía</label>
             <textarea
-              value={formData.bio}
-              onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+              value={personalFormData.bio}
+              onChange={(e) => setPersonalFormData({ ...personalFormData, bio: e.target.value })}
               rows="4"
             />
           </div>
@@ -303,24 +302,24 @@ const Dashboard = () => {
             <label>GitHub</label>
             <input
               type="url"
-              value={formData.github}
-              onChange={(e) => setFormData({ ...formData, github: e.target.value })}
+              value={personalFormData.github}
+              onChange={(e) => setPersonalFormData({ ...personalFormData, github: e.target.value })}
             />
           </div>
           <div className="form-group">
             <label>LinkedIn</label>
             <input
               type="url"
-              value={formData.linkedin}
-              onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
+              value={personalFormData.linkedin}
+              onChange={(e) => setPersonalFormData({ ...personalFormData, linkedin: e.target.value })}
             />
           </div>
           <div className="form-group full-width">
             <label>Avatar / Foto de Perfil</label>
-            {formData.avatar && (
+            {personalFormData.avatar && (
               <div style={{ marginBottom: '15px' }}>
                 <img 
-                  src={formData.avatar} 
+                  src={personalFormData.avatar} 
                   alt="Avatar actual" 
                   style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #667eea' }}
                 />
