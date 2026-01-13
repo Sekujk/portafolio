@@ -490,7 +490,7 @@ const Dashboard = () => {
   };
 
   // Componente para editar proyectos con upload de imágenes
-  const ProjectsEditor = () => {
+  const ProjectsEditor = React.memo(() => {
     const [items, setItems] = useState(portfolioData.projects || []);
 
     const handleAdd = () => {
@@ -783,7 +783,7 @@ const Dashboard = () => {
         </div>
       </div>
     );
-  };
+  });
 
   const renderContent = () => {
     switch (activeTab) {
