@@ -98,11 +98,6 @@ const PublicPortfolio = () => {
   }
 
   const { personalInfo, education, experience, skills, projects, certifications } = portfolioData;
-  
-  // Debug: ver qué hay en projects
-  console.log('📦 Datos de portfolioData:', JSON.stringify(portfolioData, null, 2));
-  console.log('🎨 Proyectos:', projects);
-  console.log('🔑 Keys de portfolioData:', Object.keys(portfolioData));
 
   return (
     <div className="public-portfolio">
@@ -294,11 +289,11 @@ const PublicPortfolio = () => {
       </section>
 
       {/* Proyectos Grid */}
-      {projects && projects.length > 1 && (
+      {projects && projects.length >= 1 && (
         <section className="projects-section">
           <div className="container">
             <div className="section-header">
-              <h2 className="section-title-modern">Otros Proyectos</h2>
+              <h2 className="section-title-modern">{projects.some(p => p.featured) ? 'Otros Proyectos' : 'Proyectos'}</h2>
               <p className="section-subtitle">Explora más de mi trabajo</p>
             </div>
             <div className="projects-masonry">
