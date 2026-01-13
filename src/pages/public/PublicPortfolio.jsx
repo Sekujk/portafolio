@@ -7,26 +7,6 @@ import './PublicPortfolio.css';
 const PublicPortfolio = () => {
   const { portfolioData, isLoading, connectionError } = usePortfolio();
 
-  // Pantalla de carga
-  if (isLoading) {
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        color: 'white',
-        fontSize: '1.5rem'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div className="loading-spinner" style={{ width: '50px', height: '50px', border: '4px solid rgba(255,255,255,0.3)', borderTop: '4px solid white', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 1rem' }}></div>
-          <div>Cargando portafolio...</div>
-        </div>
-      </div>
-    );
-  }
-
   // Pantalla de error
   if (connectionError || !portfolioData) {
     return (
