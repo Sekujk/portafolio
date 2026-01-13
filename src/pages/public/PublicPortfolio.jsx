@@ -100,8 +100,9 @@ const PublicPortfolio = () => {
   const { personalInfo, education, experience, skills, projects, certifications } = portfolioData;
   
   // Debug: ver qué hay en projects
-  console.log('📦 Datos de portfolioData:', portfolioData);
+  console.log('📦 Datos de portfolioData:', JSON.stringify(portfolioData, null, 2));
   console.log('🎨 Proyectos:', projects);
+  console.log('🔑 Keys de portfolioData:', Object.keys(portfolioData));
 
   return (
     <div className="public-portfolio">
