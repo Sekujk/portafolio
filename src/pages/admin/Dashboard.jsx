@@ -244,6 +244,73 @@ const Dashboard = () => {
     }
   };
 
+  // Funciones para manejar información personal
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validar tipo de archivo
+    if (!file.type.startsWith('image/')) {
+      showError('Solo se permiten archivos de imagen');
+      setFileInputKey(Date.now());
+      return;
+    }
+
+    // Validar tamaño (máximo 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      showError('La imagen no debe superar 2MB');
+      setFileInputKey(Date.now());
+      return;
+    }
+
+    setUploading(true);
+    
+    try {
+      const { supabase } = await import('../../config/supabase');
+      
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('portfolio-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        if (uploadError.message.includes('not found') || uploadError.message.includes('does not exist')) {
+          throw new Error('El bucket "portfolio-images" no existe. Ve a Storage en Supabase y créalo como público.');
+        }
+        throw uploadError;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('portfolio-images')
+        .getPublicUrl(filePath);
+
+      setPersonalFormData(prev => ({ ...prev, avatar: urlData.publicUrl }));
+      showSuccess('Imagen subida correctamente');
+      // No resetear el input para mantener el nombre del archivo visible
+    } catch (error) {
+      showError(error.message || 'Error al subir la imagen');
+      setFileInputKey(Date.now()); // Solo resetear en caso de error
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handlePersonalSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await updateSection('personalInfo', personalFormData);
+      showSuccess('Información personal actualizada');
+    } catch (error) {
+      showError('Error al guardar: ' + error.message);
+    }
+  };
+
   const tabs = [
     { id: 'personal', name: 'Personal', icon: <FaUser /> },
     { id: 'education', name: 'Educación', icon: <FaGraduationCap /> },
@@ -253,177 +320,6 @@ const Dashboard = () => {
     { id: 'certifications', name: 'Certificaciones', icon: <FaCertificate /> },
     { id: 'security', name: 'Seguridad', icon: <FaKey /> },
   ];
-
-  // Componente para editar información personal
-  const PersonalInfoEditor = () => {
-    const handleAvatarUpload = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      // Validar tipo de archivo
-      if (!file.type.startsWith('image/')) {
-        showError('Solo se permiten archivos de imagen');
-        setFileInputKey(Date.now());
-        return;
-      }
-
-      // Validar tamaño (máximo 2MB)
-      if (file.size > 2 * 1024 * 1024) {
-        showError('La imagen no debe superar 2MB');
-        setFileInputKey(Date.now());
-        return;
-      }
-
-      setUploading(true);
-      
-      try {
-        const { supabase } = await import('../../config/supabase');
-        
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
-        const filePath = `avatars/${fileName}`;
-
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('portfolio-images')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
-
-        if (uploadError) {
-          if (uploadError.message.includes('not found') || uploadError.message.includes('does not exist')) {
-            throw new Error('El bucket "portfolio-images" no existe. Ve a Storage en Supabase y créalo como público.');
-          }
-          throw uploadError;
-        }
-
-        const { data: urlData } = supabase.storage
-          .from('portfolio-images')
-          .getPublicUrl(filePath);
-
-        setPersonalFormData(prev => ({ ...prev, avatar: urlData.publicUrl }));
-        showSuccess('Imagen subida correctamente');
-        // No resetear el input para mantener el nombre del archivo visible
-      } catch (error) {
-        showError(error.message || 'Error al subir la imagen');
-        setFileInputKey(Date.now()); // Solo resetear en caso de error
-      } finally {
-        setUploading(false);
-      }
-    };
-
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-      try {
-        await updateSection('personalInfo', personalFormData);
-        showSuccess('Información personal actualizada');
-      } catch (error) {
-        showError('Error al guardar: ' + error.message);
-      }
-    };
-
-    return (
-      <form onSubmit={handleSubmit} className="editor-form">
-        <h3>Información Personal</h3>
-        <div className="form-grid">
-          <div className="form-group">
-            <label>Nombre Completo</label>
-            <input
-              type="text"
-              value={personalFormData.name}
-              onChange={(e) => setPersonalFormData({ ...personalFormData, name: e.target.value })}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Título Profesional</label>
-            <input
-              type="text"
-              value={personalFormData.title}
-              onChange={(e) => setPersonalFormData({ ...personalFormData, title: e.target.value })}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              value={personalFormData.email}
-              onChange={(e) => setPersonalFormData({ ...personalFormData, email: e.target.value })}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Teléfono</label>
-            <input
-              type="tel"
-              value={personalFormData.phone}
-              onChange={(e) => setPersonalFormData({ ...personalFormData, phone: e.target.value })}
-            />
-          </div>
-          <div className="form-group">
-            <label>Ubicación</label>
-            <input
-              type="text"
-              value={personalFormData.location}
-              onChange={(e) => setPersonalFormData({ ...personalFormData, location: e.target.value })}
-            />
-          </div>
-          <div className="form-group full-width">
-            <label>Biografía</label>
-            <textarea
-              value={personalFormData.bio}
-              onChange={(e) => setPersonalFormData({ ...personalFormData, bio: e.target.value })}
-              rows="4"
-            />
-          </div>
-          <div className="form-group">
-            <label>GitHub</label>
-            <input
-              type="url"
-              value={personalFormData.github}
-              onChange={(e) => setPersonalFormData({ ...personalFormData, github: e.target.value })}
-            />
-          </div>
-          <div className="form-group">
-            <label>LinkedIn</label>
-            <input
-              type="url"
-              value={personalFormData.linkedin}
-              onChange={(e) => setPersonalFormData({ ...personalFormData, linkedin: e.target.value })}
-            />
-          </div>
-          <div className="form-group full-width">
-            <label>Avatar / Foto de Perfil</label>
-            {personalFormData.avatar && (
-              <div style={{ marginBottom: '15px' }}>
-                <img 
-                  src={personalFormData.avatar} 
-                  alt="Avatar actual" 
-                  style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #667eea' }}
-                />
-              </div>
-            )}
-            <input
-              key={fileInputKey}
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarUpload}
-              disabled={uploading}
-            />
-            {uploading && (
-              <div style={{ marginTop: '10px', color: '#667eea', fontWeight: 'bold' }}>
-                ⏳ Subiendo imagen...
-              </div>
-            )}
-          </div>
-        </div>
-        <button type="submit" className="btn btn-primary">
-          <FaSave /> Guardar Cambios
-        </button>
-      </form>
-    );
-  };
 
   // Componente genérico para editar listas (educación, experiencia, etc.)
   const ListEditor = ({ section, title, fields }) => {
@@ -595,7 +491,107 @@ const Dashboard = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'personal':
-        return <PersonalInfoEditor />;
+        return (
+          <form onSubmit={handlePersonalSubmit} className="editor-form">
+            <h3>Información Personal</h3>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Nombre Completo</label>
+                <input
+                  type="text"
+                  value={personalFormData.name}
+                  onChange={(e) => setPersonalFormData({ ...personalFormData, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Título Profesional</label>
+                <input
+                  type="text"
+                  value={personalFormData.title}
+                  onChange={(e) => setPersonalFormData({ ...personalFormData, title: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  value={personalFormData.email}
+                  onChange={(e) => setPersonalFormData({ ...personalFormData, email: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Teléfono</label>
+                <input
+                  type="tel"
+                  value={personalFormData.phone}
+                  onChange={(e) => setPersonalFormData({ ...personalFormData, phone: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Ubicación</label>
+                <input
+                  type="text"
+                  value={personalFormData.location}
+                  onChange={(e) => setPersonalFormData({ ...personalFormData, location: e.target.value })}
+                />
+              </div>
+              <div className="form-group full-width">
+                <label>Biografía</label>
+                <textarea
+                  value={personalFormData.bio}
+                  onChange={(e) => setPersonalFormData({ ...personalFormData, bio: e.target.value })}
+                  rows="4"
+                />
+              </div>
+              <div className="form-group">
+                <label>GitHub</label>
+                <input
+                  type="url"
+                  value={personalFormData.github}
+                  onChange={(e) => setPersonalFormData({ ...personalFormData, github: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>LinkedIn</label>
+                <input
+                  type="url"
+                  value={personalFormData.linkedin}
+                  onChange={(e) => setPersonalFormData({ ...personalFormData, linkedin: e.target.value })}
+                />
+              </div>
+              <div className="form-group full-width">
+                <label>Avatar / Foto de Perfil</label>
+                {personalFormData.avatar && (
+                  <div style={{ marginBottom: '15px' }}>
+                    <img 
+                      src={personalFormData.avatar} 
+                      alt="Avatar actual" 
+                      style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #667eea' }}
+                    />
+                  </div>
+                )}
+                <input
+                  key={fileInputKey}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  disabled={uploading}
+                />
+                {uploading && (
+                  <div style={{ marginTop: '10px', color: '#667eea', fontWeight: 'bold' }}>
+                    ⏳ Subiendo imagen...
+                  </div>
+                )}
+              </div>
+            </div>
+            <button type="submit" className="btn btn-primary">
+              <FaSave /> Guardar Cambios
+            </button>
+          </form>
+        );
       case 'education':
         return <ListEditor
           section="education"
