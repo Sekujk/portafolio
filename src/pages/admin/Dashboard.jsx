@@ -153,7 +153,7 @@ const Dashboard = () => {
 
   // Componente para editar información personal
   const PersonalInfoEditor = () => {
-    const handleImageUpload = async (e) => {
+    const handleAvatarUpload = async (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
@@ -305,7 +305,7 @@ const Dashboard = () => {
               key={fileInputKey}
               type="file"
               accept="image/*"
-              onChange={handleImageUpload}
+              onChange={handleAvatarUpload}
               disabled={uploading}
             />
             {uploading && (
@@ -534,7 +534,7 @@ const Dashboard = () => {
       }
     };
 
-    const handleImageUpload = async (e) => {
+    const handleProjectImageUpload = async (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
@@ -647,7 +647,7 @@ const Dashboard = () => {
                   key={projectImageKey}
                   type="file"
                   accept="image/*"
-                  onChange={handleImageUpload}
+                  onChange={handleProjectImageUpload}
                   disabled={uploadingProjectImage}
                 />
                 {uploadingProjectImage && (
