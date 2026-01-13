@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FaGithub, FaLinkedin, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCode, FaBriefcase, FaGraduationCap, FaExclamationTriangle, FaDatabase } from 'react-icons/fa';
+import { FaGithub, FaLinkedin, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCode, FaBriefcase, FaGraduationCap, FaExclamationTriangle, FaDatabase, FaExternalLinkAlt, FaCertificate, FaRocket } from 'react-icons/fa';
 import { usePortfolio } from '../../context/PortfolioContext';
 import './PublicPortfolio.css';
 
@@ -20,7 +20,7 @@ const PublicPortfolio = () => {
         fontSize: '1.5rem'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⏳</div>
+          <div className="loading-spinner" style={{ width: '50px', height: '50px', border: '4px solid rgba(255,255,255,0.3)', borderTop: '4px solid white', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 1rem' }}></div>
           <div>Cargando portafolio...</div>
         </div>
       </div>
@@ -212,7 +212,7 @@ const PublicPortfolio = () => {
                   const featuredProject = projects.find(p => p.featured);
                   return (
                     <>
-                      <div className="featured-label">⭐ Proyecto Destacado</div>
+                      <div className="featured-label">Proyecto Destacado</div>
                       <img src={featuredProject.image} alt={featuredProject.title} className="featured-image" />
                       <div className="featured-content">
                         <h3>{featuredProject.title}</h3>
@@ -230,7 +230,7 @@ const PublicPortfolio = () => {
                           )}
                           {featuredProject.demo && (
                             <a href={featuredProject.demo} target="_blank" rel="noopener noreferrer">
-                              🚀 Ver Demo
+                              <FaExternalLinkAlt /> Ver Demo
                             </a>
                           )}
                         </div>
@@ -250,7 +250,7 @@ const PublicPortfolio = () => {
                 viewport={{ once: true }}
                 transition={{ delay: 0.2 }}
               >
-                <h2 className="bento-title">🎓 Educación</h2>
+                <h2 className="bento-title"><FaGraduationCap style={{ marginRight: '10px', verticalAlign: 'middle' }} />Educación</h2>
                 {education.map((edu) => (
                   <div key={edu.id} className="edu-compact">
                     <h4>{edu.degree}</h4>
@@ -270,7 +270,7 @@ const PublicPortfolio = () => {
                 viewport={{ once: true }}
                 transition={{ delay: 0.3 }}
               >
-                <h2 className="bento-title">💼 Experiencia</h2>
+                <h2 className="bento-title"><FaBriefcase style={{ marginRight: '10px', verticalAlign: 'middle' }} />Experiencia</h2>
                 <div className="exp-list">
                   {experience.map((exp) => (
                     <div key={exp.id} className="exp-compact">
@@ -317,7 +317,7 @@ const PublicPortfolio = () => {
                         )}
                         {project.demo && (
                           <a href={project.demo} target="_blank" rel="noopener noreferrer">
-                            🚀
+                            <FaExternalLinkAlt />
                           </a>
                         )}
                       </div>
