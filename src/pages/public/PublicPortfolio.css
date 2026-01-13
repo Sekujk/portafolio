@@ -294,6 +294,18 @@ body {
   grid-auto-flow: dense;
 }
 
+/* Orden por defecto en desktop */
+.bento-skills { order: 1; }
+.bento-featured-project { order: 2; }
+.bento-education { order: 3; }
+.bento-experience { order: 4; }
+
+/* Orden por defecto en desktop */
+.bento-skills { order: 1; }
+.bento-featured-project { order: 2; }
+.bento-education { order: 3; }
+.bento-experience { order: 4; }
+
 .bento-item {
   background: var(--bg-card);
   border-radius: 24px;
@@ -927,9 +939,14 @@ body {
     min-height: auto;
   }
 
+  .hero-grid {
+    gap: 2rem;
+  }
+
   .hero-name {
     font-size: 2.5rem;
     line-height: 1.1;
+    margin-bottom: 0.75rem;
   }
 
   .hero-title {
@@ -947,6 +964,15 @@ body {
 
   .section-title-modern {
     font-size: 2rem;
+    line-height: 1.2;
+  }
+
+  .section-subtitle {
+    font-size: 1rem;
+  }
+
+  .section-header {
+    margin-bottom: 2.5rem;
   }
 
   .cta-content h2 {
@@ -980,7 +1006,20 @@ body {
 
   .hero-stats {
     grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
+
+  .stat-item {
+    padding: 0.75rem 1rem;
+    flex-direction: row;
+    justify-content: center;
+  }
+
+  /* Reordenar bento items en móvil para priorizar proyectos */
+  .bento-featured-project { order: 1; }
+  .bento-skills { order: 2; }
+  .bento-education { order: 3; }
+  .bento-experience { order: 4; }
 
   .bento-item {
     padding: 1.5rem;
@@ -1014,8 +1053,36 @@ body {
     width: 100%;
   }
 
+  .projects-section {
+    padding: 3rem 0;
+  }
+
+  .projects-masonry {
+    gap: 1.5rem;
+  }
+
   .project-card-modern {
-    padding: 1rem;
+    padding: 0;
+  }
+
+  .projects-section {
+    padding: 3rem 0;
+  }
+
+  .projects-masonry {
+    gap: 1.5rem;
+  }
+
+  .project-card-modern {
+    padding: 0;
+  }
+
+  .project-content {
+    padding: 1.25rem;
+  }
+
+  .project-image-wrapper {
+    height: 180px;
   }
 
   .skills-compact {
@@ -1030,19 +1097,32 @@ body {
 
 @media (max-width: 480px) {
   .hero-section {
-    padding: 1.5rem 0;
+    padding: 1.5rem 0 2.5rem;
+  }
+
+  .hero-grid {
+    gap: 1.5rem;
   }
 
   .hero-name {
     font-size: 2rem;
+    margin-bottom: 0.5rem;
   }
 
   .hero-title {
     font-size: 1.1rem;
+    margin-bottom: 0.75rem;
   }
 
   .hero-bio {
     font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-badge {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+    margin-bottom: 1rem;
   }
 
   .section-title-modern {
@@ -1051,6 +1131,10 @@ body {
 
   .section-subtitle {
     font-size: 0.95rem;
+  }
+
+  .section-header {
+    margin-bottom: 2rem;
   }
 
   .hero-avatar {
@@ -1067,6 +1151,10 @@ body {
     padding: 0.75rem 1rem;
   }
 
+  .bento-section {
+    padding: 2.5rem 0;
+  }
+
   .bento-grid {
     gap: 1rem;
   }
@@ -1080,13 +1168,30 @@ body {
     height: 200px;
   }
 
+  .featured-content {
+    padding: 1.25rem;
+  }
+
   .featured-content h3 {
     font-size: 1.25rem;
+  }
+
+  .featured-content p {
+    font-size: 0.9rem;
+    line-height: 1.6;
   }
 
   .featured-tech span {
     font-size: 0.75rem;
     padding: 0.3rem 0.7rem;
+  }
+
+  .projects-section {
+    padding: 2.5rem 0;
+  }
+
+  .projects-masonry {
+    gap: 1.25rem;
   }
 
   .project-card-modern h3 {
@@ -1108,6 +1213,14 @@ body {
 
   .edu-compact h3, .exp-item h3 {
     font-size: 1rem;
+  }
+
+  .cta-section {
+    padding: 2.5rem 0;
+  }
+
+  .cta-content h2 {
+    font-size: 1.5rem;
   }
 
   .footer-section {
