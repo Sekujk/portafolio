@@ -77,6 +77,11 @@ const PublicPortfolio = () => {
     );
   }
 
+  // Si todavía está cargando o no hay datos, no renderizar nada
+  if (isLoading || !portfolioData) {
+    return null;
+  }
+
   const { personalInfo, education, experience, skills, projects, certifications } = portfolioData;
 
   return (
