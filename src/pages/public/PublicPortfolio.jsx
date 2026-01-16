@@ -7,8 +7,8 @@ import './PublicPortfolio.css';
 const PublicPortfolio = () => {
   const { portfolioData, isLoading, connectionError } = usePortfolio();
 
-  // Pantalla de error
-  if (connectionError || !portfolioData) {
+  // Pantalla de error (solo mostrar si no está cargando y hay error o no hay datos)
+  if (!isLoading && (connectionError || !portfolioData)) {
     return (
       <div style={{
         display: 'flex',
