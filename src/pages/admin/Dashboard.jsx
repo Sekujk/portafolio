@@ -30,6 +30,9 @@ const Dashboard = () => {
   const [projectImageKey, setProjectImageKey] = useState(Date.now());
   const [projectItems, setProjectItems] = useState(portfolioData?.projects || []);
 
+  // Estado del formulario de skills para persistir
+  const [skillsFormData, setSkillsFormData] = useState(portfolioData?.skills || {});
+
   // Sincronizar personalFormData cuando portfolioData cambie
   React.useEffect(() => {
     if (portfolioData?.personalInfo) {
@@ -43,6 +46,13 @@ const Dashboard = () => {
       setProjectItems(portfolioData.projects);
     }
   }, [portfolioData?.projects]);
+
+  // Sincronizar skillsFormData cuando portfolioData.skills cambie
+  React.useEffect(() => {
+    if (portfolioData?.skills) {
+      setSkillsFormData(portfolioData.skills);
+    }
+  }, [portfolioData?.skills]);
 
   // Si hay error de conexión, mostrar pantalla de error
   if (connectionError || !portfolioData) {
@@ -207,6 +217,24 @@ const Dashboard = () => {
       showSuccess('Proyecto eliminado');
       setProjectItems(portfolioData.projects || []);
     }
+  };
+
+  const handleSkillsSubmit = (e) => {
+    e.preventDefault();
+    updateSection('skills', skillsFormData);
+    showSuccess('Habilidades actualizadas');
+  };
+
+  const handleAddSkillCategory = () => {
+    const categoryName = prompt('Nombre de la nueva categoría:');
+    if (categoryName) {
+      setSkillsFormData({ ...skillsFormData, [categoryName.toLowerCase()]: [] });
+    }
+  };
+
+  const handleUpdateSkills = (category, value) => {
+    const skillsArray = value.split(',').map(s => s.trim()).filter(s => s);
+    setSkillsFormData({ ...skillsFormData, [category]: skillsArray });
   };
 
   const handleProjectImageUpload = async (e) => {
@@ -457,55 +485,6 @@ const Dashboard = () => {
     );
   };
 
-  const SkillsEditor = () => {
-    const [skills, setSkills] = useState(portfolioData.skills || {});
-
-    const handleSubmit = (e) => {
-      e.preventDefault();
-      updateSection('skills', skills);
-      showSuccess('Habilidades actualizadas');
-    };
-
-    const handleAddCategory = () => {
-      const categoryName = prompt('Nombre de la nueva categoría:');
-      if (categoryName) {
-        setSkills({ ...skills, [categoryName.toLowerCase()]: [] });
-      }
-    };
-
-    const handleUpdateSkills = (category, value) => {
-      const skillsArray = value.split(',').map(s => s.trim()).filter(s => s);
-      setSkills({ ...skills, [category]: skillsArray });
-    };
-
-    return (
-      <form onSubmit={handleSubmit} className="editor-form">
-        <div className="list-header">
-          <h3>Habilidades por Categoría</h3>
-          <button type="button" onClick={handleAddCategory} className="btn btn-primary btn-sm">
-            <FaPlus /> Nueva Categoría
-          </button>
-        </div>
-        
-        {Object.entries(skills).map(([category, skillList]) => (
-          <div key={category} className="form-group">
-            <label>{category.charAt(0).toUpperCase() + category.slice(1)}</label>
-            <input
-              type="text"
-              value={skillList.join(', ')}
-              onChange={(e) => handleUpdateSkills(category, e.target.value)}
-              placeholder="Separadas por comas"
-            />
-          </div>
-        ))}
-        
-        <button type="submit" className="btn btn-primary">
-          <FaSave /> Guardar Cambios
-        </button>
-      </form>
-    );
-  };
-
   const renderContent = () => {
     switch (activeTab) {
       case 'personal':
@@ -634,7 +613,32 @@ const Dashboard = () => {
           ]}
         />;
       case 'skills':
-        return <SkillsEditor />;
+        return (
+          <form onSubmit={handleSkillsSubmit} className="editor-form">
+            <div className="list-header">
+              <h3>Habilidades por Categoría</h3>
+              <button type="button" onClick={handleAddSkillCategory} className="btn btn-primary btn-sm">
+                <FaPlus /> Nueva Categoría
+              </button>
+            </div>
+            
+            {Object.entries(skillsFormData).map(([category, skillList]) => (
+              <div key={category} className="form-group">
+                <label>{category.charAt(0).toUpperCase() + category.slice(1)}</label>
+                <input
+                  type="text"
+                  value={skillList.join(', ')}
+                  onChange={(e) => handleUpdateSkills(category, e.target.value)}
+                  placeholder="Separadas por comas"
+                />
+              </div>
+            ))}
+            
+            <button type="submit" className="btn btn-primary">
+              <FaSave /> Guardar Cambios
+            </button>
+          </form>
+        );
       case 'projects':
         return (
           <div className="list-editor">
