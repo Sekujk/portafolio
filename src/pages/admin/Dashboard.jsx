@@ -170,11 +170,29 @@ const Dashboard = () => {
   };
 
   const handleSaveProject = () => {
+    let projectToSave = { ...projectEditForm };
+    
+    // Si se marca como destacado, desmarcar todos los demás proyectos
+    if (projectToSave.featured) {
+      const currentProjects = portfolioData.projects || [];
+      const updatedProjects = currentProjects.map(p => ({
+        ...p,
+        featured: p.id === projectToSave.id ? true : false
+      }));
+      
+      // Actualizar todos los proyectos primero
+      updatedProjects.forEach(p => {
+        if (p.id !== projectToSave.id) {
+          updateItem('projects', p.id, { ...p, featured: false });
+        }
+      });
+    }
+    
     if (projectIsAdding) {
-      addItem('projects', projectEditForm);
+      addItem('projects', projectToSave);
       showSuccess('Proyecto agregado');
     } else {
-      updateItem('projects', projectEditForm.id, projectEditForm);
+      updateItem('projects', projectToSave.id, projectToSave);
       showSuccess('Proyecto actualizado');
     }
     setProjectEditForm(null);
@@ -719,6 +737,7 @@ const Dashboard = () => {
                       />
                       Proyecto Destacado
                     </label>
+                    <small style={{ color: '#f59e0b', fontSize: '0.85rem', marginTop: '5px', display: 'block' }}>Solo puede haber un proyecto destacado</small>
                   </div>
 
                   <div className="modal-actions">

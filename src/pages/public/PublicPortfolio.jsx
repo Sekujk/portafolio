@@ -198,7 +198,9 @@ const PublicPortfolio = () => {
                   return (
                     <>
                       <div className="featured-label">Proyecto Destacado</div>
-                      <img src={featuredProject.image} alt={featuredProject.title} className="featured-image" />
+                      {featuredProject.image && (
+                        <img src={featuredProject.image} alt={featuredProject.title} className="featured-image" />
+                      )}
                       <div className="featured-content">
                         <h3>{featuredProject.title}</h3>
                         <p>{featuredProject.description}</p>
@@ -282,7 +284,7 @@ const PublicPortfolio = () => {
               <p className="section-subtitle">Explora más de mi trabajo</p>
             </div>
             <div className="projects-masonry">
-              {projects.filter(p => !p.featured).map((project, index) => (
+              {projects.map((project, index) => (
                 <motion.div
                   key={project.id}
                   className="project-card-modern"
