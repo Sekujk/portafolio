@@ -53,6 +53,15 @@ const Dashboard = () => {
 
   // Estado del formulario de skills para persistir
   const [skillsFormData, setSkillsFormData] = useState(portfolioData?.skills || {});
+  // Estado para los inputs de skills (strings mientras el usuario edita)
+  const [skillsInputStrings, setSkillsInputStrings] = useState(() => {
+    const strings = {};
+    const skills = portfolioData?.skills || {};
+    Object.entries(skills).forEach(([category, skillArray]) => {
+      strings[category] = Array.isArray(skillArray) ? skillArray.join(', ') : '';
+    });
+    return strings;
+  });
 
   // Sincronizar personalFormData cuando portfolioData cambie
   React.useEffect(() => {
@@ -68,10 +77,16 @@ const Dashboard = () => {
     }
   }, [portfolioData?.projects]);
 
-  // Sincronizar skillsFormData cuando portfolioData.skills cambie
+  // Sincronizar skillsFormData y skillsInputStrings cuando portfolioData.skills cambie
   React.useEffect(() => {
     if (portfolioData?.skills) {
       setSkillsFormData(portfolioData.skills);
+      // Convertir arrays a strings para los inputs
+      const strings = {};
+      Object.entries(portfolioData.skills).forEach(([category, skillArray]) => {
+        strings[category] = Array.isArray(skillArray) ? skillArray.join(', ') : '';
+      });
+      setSkillsInputStrings(strings);
     }
   }, [portfolioData?.skills]);
 
@@ -101,20 +116,30 @@ const Dashboard = () => {
   const handleAddSkillCategory = useCallback(() => {
     const categoryName = prompt('Nombre de la nueva categoría:');
     if (categoryName) {
-      setSkillsFormData(prev => ({ ...prev, [categoryName.toLowerCase()]: [] }));
+      const categoryKey = categoryName.toLowerCase();
+      setSkillsFormData(prev => ({ ...prev, [categoryKey]: [] }));
+      setSkillsInputStrings(prev => ({ ...prev, [categoryKey]: '' }));
     }
   }, []);
 
   const handleUpdateSkills = useCallback((e) => {
     const category = e.target.name;
     const value = e.target.value;
-    const skillsArray = value.split(',').map(s => s.trim()).filter(s => s);
-    setSkillsFormData(prev => ({ ...prev, [category]: skillsArray }));
+    // Solo guardar el string directamente, sin transformaciones
+    setSkillsInputStrings(prev => ({ ...prev, [category]: value }));
   }, []);
 
   const handleSkillsSubmit = (e) => {
     e.preventDefault();
-    updateSection('skills', skillsFormData);
+    // Convertir los strings a arrays antes de guardar
+    const skillsToSave = {};
+    Object.entries(skillsInputStrings).forEach(([category, skillString]) => {
+      skillsToSave[category] = skillString
+        .split(',')
+        .map(s => s.trim())
+        .filter(s => s);
+    });
+    updateSection('skills', skillsToSave);
     showSuccess('Habilidades actualizadas');
   };
 
@@ -653,11 +678,11 @@ const Dashboard = () => {
               </button>
             </div>
             
-            {Object.entries(skillsFormData).map(([category, skillList]) => (
+            {Object.entries(skillsInputStrings).map(([category, skillString]) => (
               <SkillInput
                 key={`skill-${category}`}
                 category={category}
-                value={skillList.join(', ')}
+                value={skillString}
                 onChange={handleUpdateSkills}
               />
             ))}
