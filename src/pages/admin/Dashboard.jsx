@@ -54,95 +54,7 @@ const Dashboard = () => {
     }
   }, [portfolioData?.skills]);
 
-  // Si hay error de conexión, mostrar pantalla de error (solo si no está cargando)
-  if (!isLoading && (connectionError || !portfolioData)) {
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        padding: '2rem'
-      }}>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          style={{
-            background: 'white',
-            borderRadius: '20px',
-            padding: '3rem',
-            maxWidth: '600px',
-            textAlign: 'center',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
-          }}
-        >
-          <FaExclamationTriangle style={{ fontSize: '4rem', color: '#f5576c', marginBottom: '1.5rem' }} />
-          <h1 style={{ fontSize: '2rem', marginBottom: '1rem', color: '#333' }}>
-            No se puede acceder al Dashboard
-          </h1>
-          <p style={{ fontSize: '1.1rem', color: '#666', marginBottom: '1.5rem' }}>
-            {connectionError || 'Error de conexión con Supabase'}
-          </p>
-          <div style={{
-            background: '#f8f9fa',
-            padding: '1.5rem',
-            borderRadius: '12px',
-            textAlign: 'left',
-            fontSize: '0.95rem',
-            color: '#444',
-            marginBottom: '1.5rem'
-          }}>
-            <strong style={{ display: 'block', marginBottom: '0.5rem', color: '#f5576c' }}>
-              ⚠️ Requisitos:
-            </strong>
-            <ol style={{ marginLeft: '1.5rem', lineHeight: '1.8' }}>
-              <li>Archivo <code>.env</code> con credenciales correctas</li>
-              <li>Script <code>supabase-setup.sql</code> ejecutado en Supabase</li>
-              <li>Proyecto de Supabase activo</li>
-            </ol>
-          </div>
-          <button
-            onClick={() => window.location.reload()}
-            style={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              border: 'none',
-              padding: '1rem 2rem',
-              borderRadius: '12px',
-              fontSize: '1rem',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              marginRight: '1rem'
-            }}
-          >
-            🔄 Reintentar
-          </button>
-          <button
-            onClick={() => navigate('/admin')}
-            style={{
-              background: '#6c757d',
-              color: 'white',
-              border: 'none',
-              padding: '1rem 2rem',
-              borderRadius: '12px',
-              fontSize: '1rem',
-              cursor: 'pointer',
-              fontWeight: 'bold'
-            }}
-          >
-            ← Volver al Login
-          </button>
-        </motion.div>
-      </div>
-    );
-  }
-
-  // Si todavía está cargando o no hay datos, no renderizar nada
-  if (isLoading || !portfolioData) {
-    return null;
-  }
-
+  // Funciones de utilidad
   const showSuccess = (message) => {
     setSuccessMessage(message);
     setErrorMessage('');
@@ -162,6 +74,25 @@ const Dashboard = () => {
 
   const handleViewPortfolio = () => {
     window.open('/', '_blank');
+  };
+
+  // Skills handlers con useCallback
+  const handleAddSkillCategory = useCallback(() => {
+    const categoryName = prompt('Nombre de la nueva categoría:');
+    if (categoryName) {
+      setSkillsFormData(prev => ({ ...prev, [categoryName.toLowerCase()]: [] }));
+    }
+  }, []);
+
+  const handleUpdateSkills = useCallback((category, value) => {
+    const skillsArray = value.split(',').map(s => s.trim()).filter(s => s);
+    setSkillsFormData(prev => ({ ...prev, [category]: skillsArray }));
+  }, []);
+
+  const handleSkillsSubmit = (e) => {
+    e.preventDefault();
+    updateSection('skills', skillsFormData);
+    showSuccess('Habilidades actualizadas');
   };
 
   // Funciones para manejar proyectos
@@ -189,7 +120,7 @@ const Dashboard = () => {
     
     // Si se marca como destacado, desmarcar todos los demás proyectos
     if (projectToSave.featured) {
-      const currentProjects = portfolioData.projects || [];
+      const currentProjects = portfolioData?.projects || [];
       const updatedProjects = currentProjects.map(p => ({
         ...p,
         featured: p.id === projectToSave.id ? true : false
@@ -197,7 +128,7 @@ const Dashboard = () => {
       
       // Actualizar todos los proyectos primero
       updatedProjects.forEach(p => {
-        if (p.id !== projectToSave.id) {
+        if (p.id !== projectToSave.id && portfolioData) {
           updateItem('projects', p.id, { ...p, featured: false });
         }
       });
@@ -212,7 +143,7 @@ const Dashboard = () => {
     }
     setProjectEditForm(null);
     setProjectIsAdding(false);
-    setProjectItems(portfolioData.projects || []);
+    setProjectItems(portfolioData?.projects || []);
     setProjectImageKey(Date.now());
   };
 
@@ -220,27 +151,9 @@ const Dashboard = () => {
     if (window.confirm('¿Estás seguro de eliminar este proyecto?')) {
       deleteItem('projects', id);
       showSuccess('Proyecto eliminado');
-      setProjectItems(portfolioData.projects || []);
+      setProjectItems(portfolioData?.projects || []);
     }
   };
-
-  const handleSkillsSubmit = (e) => {
-    e.preventDefault();
-    updateSection('skills', skillsFormData);
-    showSuccess('Habilidades actualizadas');
-  };
-
-  const handleAddSkillCategory = useCallback(() => {
-    const categoryName = prompt('Nombre de la nueva categoría:');
-    if (categoryName) {
-      setSkillsFormData(prev => ({ ...prev, [categoryName.toLowerCase()]: [] }));
-    }
-  }, []);
-
-  const handleUpdateSkills = useCallback((category, value) => {
-    const skillsArray = value.split(',').map(s => s.trim()).filter(s => s);
-    setSkillsFormData(prev => ({ ...prev, [category]: skillsArray }));
-  }, []);
 
   const handleProjectImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -362,6 +275,96 @@ const Dashboard = () => {
     }
   };
 
+  // Si hay error de conexión, mostrar pantalla de error (solo si no está cargando)
+  if (!isLoading && (connectionError || !portfolioData)) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        padding: '2rem'
+      }}>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          style={{
+            background: 'white',
+            borderRadius: '20px',
+            padding: '3rem',
+            maxWidth: '600px',
+            textAlign: 'center',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+          }}
+        >
+          <FaExclamationTriangle style={{ fontSize: '4rem', color: '#f5576c', marginBottom: '1.5rem' }} />
+          <h1 style={{ fontSize: '2rem', marginBottom: '1rem', color: '#333' }}>
+            No se puede acceder al Dashboard
+          </h1>
+          <p style={{ fontSize: '1.1rem', color: '#666', marginBottom: '1.5rem' }}>
+            {connectionError || 'Error de conexión con Supabase'}
+          </p>
+          <div style={{
+            background: '#f8f9fa',
+            padding: '1.5rem',
+            borderRadius: '12px',
+            textAlign: 'left',
+            fontSize: '0.95rem',
+            color: '#444',
+            marginBottom: '1.5rem'
+          }}>
+            <strong style={{ display: 'block', marginBottom: '0.5rem', color: '#f5576c' }}>
+              ⚠️ Requisitos:
+            </strong>
+            <ol style={{ marginLeft: '1.5rem', lineHeight: '1.8' }}>
+              <li>Archivo <code>.env</code> con credenciales correctas</li>
+              <li>Script <code>supabase-setup.sql</code> ejecutado en Supabase</li>
+              <li>Proyecto de Supabase activo</li>
+            </ol>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
+              border: 'none',
+              padding: '1rem 2rem',
+              borderRadius: '12px',
+              fontSize: '1rem',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              marginRight: '1rem'
+            }}
+          >
+            🔄 Reintentar
+          </button>
+          <button
+            onClick={() => navigate('/admin')}
+            style={{
+              background: '#6c757d',
+              color: 'white',
+              border: 'none',
+              padding: '1rem 2rem',
+              borderRadius: '12px',
+              fontSize: '1rem',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
+          >
+            ← Volver al Login
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Si todavía está cargando o no hay datos, no renderizar nada
+  if (isLoading || !portfolioData) {
+    return null;
+  }
+
+  // Tabs de navegación
   const tabs = [
     { id: 'personal', name: 'Personal', icon: <FaUser /> },
     { id: 'education', name: 'Educación', icon: <FaGraduationCap /> },
