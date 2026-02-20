@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -138,17 +138,17 @@ const Dashboard = () => {
     );
   }
 
-  const showSuccess = (message) => {
+  const showSuccess = useCallback((message) => {
     setSuccessMessage(message);
     setErrorMessage('');
     setTimeout(() => setSuccessMessage(''), 3000);
-  };
+  }, []);
 
-  const showError = (message) => {
+  const showError = useCallback((message) => {
     setErrorMessage(message);
     setSuccessMessage('');
     setTimeout(() => setErrorMessage(''), 5000);
-  };
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -219,23 +219,23 @@ const Dashboard = () => {
     }
   };
 
-  const handleSkillsSubmit = (e) => {
+  const handleSkillsSubmit = useCallback((e) => {
     e.preventDefault();
     updateSection('skills', skillsFormData);
     showSuccess('Habilidades actualizadas');
-  };
+  }, [updateSection, skillsFormData, showSuccess]);
 
-  const handleAddSkillCategory = () => {
+  const handleAddSkillCategory = useCallback(() => {
     const categoryName = prompt('Nombre de la nueva categoría:');
     if (categoryName) {
-      setSkillsFormData({ ...skillsFormData, [categoryName.toLowerCase()]: [] });
+      setSkillsFormData(prev => ({ ...prev, [categoryName.toLowerCase()]: [] }));
     }
-  };
+  }, []);
 
-  const handleUpdateSkills = (category, value) => {
+  const handleUpdateSkills = useCallback((category, value) => {
     const skillsArray = value.split(',').map(s => s.trim()).filter(s => s);
-    setSkillsFormData({ ...skillsFormData, [category]: skillsArray });
-  };
+    setSkillsFormData(prev => ({ ...prev, [category]: skillsArray }));
+  }, []);
 
   const handleProjectImageUpload = async (e) => {
     const file = e.target.files[0];
