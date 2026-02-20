@@ -9,6 +9,27 @@ import { useAuth } from '../../context/AuthContext';
 import { usePortfolio } from '../../context/PortfolioContext';
 import './Dashboard.css';
 
+// Componente memoizado para cada input de skill (FUERA del Dashboard para que React.memo funcione)
+const SkillInput = React.memo(({ category, value, onChange }) => {
+  return (
+    <div className="form-group">
+      <label>{category.charAt(0).toUpperCase() + category.slice(1)}</label>
+      <input
+        type="text"
+        name={category}
+        value={value}
+        onChange={onChange}
+        placeholder="Separadas por comas"
+        autoComplete="off"
+      />
+    </div>
+  );
+}, (prevProps, nextProps) => {
+  // Solo re-renderizar si el valor o la categoría cambian
+  return prevProps.category === nextProps.category && prevProps.value === nextProps.value;
+});
+SkillInput.displayName = 'SkillInput';
+
 const Dashboard = () => {
   const { logout, changePassword } = useAuth();
   const { portfolioData, isLoading, connectionError, updateSection, addItem, updateItem, deleteItem, resetToDefaults } = usePortfolio();
@@ -494,20 +515,6 @@ const Dashboard = () => {
       </div>
     );
   };
-
-  // Componente memoizado para cada input de skill
-  const SkillInput = React.memo(({ category, value, onChange }) => (
-    <div className="form-group">
-      <label>{category.charAt(0).toUpperCase() + category.slice(1)}</label>
-      <input
-        type="text"
-        name={category}
-        value={value}
-        onChange={onChange}
-        placeholder="Separadas por comas"
-      />
-    </div>
-  ));
 
   const renderContent = () => {
     switch (activeTab) {
