@@ -297,14 +297,12 @@ body {
 /* Orden por defecto en desktop */
 .bento-skills { order: 1; }
 .bento-featured-project { order: 2; }
-.bento-education { order: 3; }
-.bento-experience { order: 4; }
+.bento-edu-exp { order: 3; grid-column: span 2; }
 
 /* Orden por defecto en desktop */
 .bento-skills { order: 1; }
 .bento-featured-project { order: 2; }
-.bento-education { order: 3; }
-.bento-experience { order: 4; }
+.bento-edu-exp { order: 3; grid-column: span 2; }
 
 .bento-item {
   background: var(--bg-card);
@@ -545,6 +543,57 @@ body {
   box-shadow: var(--shadow-colored);
 }
 
+/* Educación y Experiencia combinadas */
+.bento-edu-exp {
+  grid-column: span 2;
+}
+
+.edu-exp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  height: 100%;
+}
+
+.edu-column,
+.exp-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.edu-scroll-container,
+.exp-scroll-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0.5rem;
+  max-height: 450px;
+}
+
+/* Scrollbar personalizado */
+.edu-scroll-container::-webkit-scrollbar,
+.exp-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.edu-scroll-container::-webkit-scrollbar-track,
+.exp-scroll-container::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 10px;
+}
+
+.edu-scroll-container::-webkit-scrollbar-thumb,
+.exp-scroll-container::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 10px;
+}
+
+.edu-scroll-container::-webkit-scrollbar-thumb:hover,
+.exp-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-dark);
+}
+
 /* Education Bento */
 .bento-education {
   grid-column: span 1;
@@ -620,6 +669,12 @@ body {
 /* Experience Bento */
 .bento-experience {
   grid-column: span 1;
+}
+
+.exp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
 .exp-list {
@@ -1124,6 +1179,20 @@ body {
     grid-row: span 1;
   }
 
+  .bento-edu-exp {
+    grid-column: span 1;
+  }
+
+  .edu-exp-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .edu-scroll-container,
+  .exp-scroll-container {
+    max-height: 350px;
+  }
+
   .hero-avatar {
     max-width: 300px;
   }
@@ -1226,8 +1295,7 @@ body {
   /* Reordenar bento items en móvil para priorizar proyectos */
   .bento-featured-project { order: 1; }
   .bento-skills { order: 2; }
-  .bento-education { order: 3; }
-  .bento-experience { order: 4; }
+  .bento-edu-exp { order: 3; }
 
   .bento-item {
     padding: 1.5rem;

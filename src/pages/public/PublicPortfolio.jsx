@@ -232,46 +232,49 @@ const PublicPortfolio = () => {
               </motion.div>
             )}
 
-            {/* Educación Compacta */}
-            {education && education.length > 0 && (
+            {/* Educación y Experiencia combinadas */}
+            {((education && education.length > 0) || (experience && experience.length > 0)) && (
               <motion.div
-                className="bento-item bento-education"
+                className="bento-item bento-edu-exp"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.2 }}
               >
-                <h2 className="bento-title"><FaGraduationCap style={{ marginRight: '10px', verticalAlign: 'middle' }} />Educación</h2>
-                {education.map((edu) => (
-                  <div key={edu.id} className="edu-compact">
-                    <h4>{edu.degree}</h4>
-                    <p className="edu-institution">{edu.institution}</p>
-                    <span className="edu-period">{edu.period}</span>
-                  </div>
-                ))}
-              </motion.div>
-            )}
-
-            {/* Experiencia Rápida */}
-            {experience && experience.length > 0 && (
-              <motion.div
-                className="bento-item bento-experience"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3 }}
-              >
-                <h2 className="bento-title"><FaBriefcase style={{ marginRight: '10px', verticalAlign: 'middle' }} />Experiencia</h2>
-                <div className="exp-list">
-                  {experience.map((exp) => (
-                    <div key={exp.id} className="exp-compact">
-                      <div className="exp-header">
-                        <h4>{exp.position}</h4>
-                        <span className="exp-period">{exp.period}</span>
+                <div className="edu-exp-grid">
+                  {/* Educación */}
+                  {education && education.length > 0 && (
+                    <div className="edu-column">
+                      <h2 className="bento-title"><FaGraduationCap style={{ marginRight: '10px', verticalAlign: 'middle' }} />Educación</h2>
+                      <div className="edu-scroll-container">
+                        {education.map((edu) => (
+                          <div key={edu.id} className="edu-compact">
+                            <h4>{edu.degree}</h4>
+                            <p className="edu-institution">{edu.institution}</p>
+                            <span className="edu-period">{edu.period}</span>
+                          </div>
+                        ))}
                       </div>
-                      <p className="exp-company">{exp.company}</p>
                     </div>
-                  ))}
+                  )}
+
+                  {/* Experiencia */}
+                  {experience && experience.length > 0 && (
+                    <div className="exp-column">
+                      <h2 className="bento-title"><FaBriefcase style={{ marginRight: '10px', verticalAlign: 'middle' }} />Experiencia</h2>
+                      <div className="exp-scroll-container">
+                        {experience.map((exp) => (
+                          <div key={exp.id} className="exp-compact">
+                            <div className="exp-header">
+                              <h4>{exp.position}</h4>
+                              <span className="exp-period">{exp.period}</span>
+                            </div>
+                            <p className="exp-company">{exp.company}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             )}
