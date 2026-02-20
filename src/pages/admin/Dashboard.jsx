@@ -84,7 +84,9 @@ const Dashboard = () => {
     }
   }, []);
 
-  const handleUpdateSkills = useCallback((category, value) => {
+  const handleUpdateSkills = useCallback((e) => {
+    const category = e.target.name;
+    const value = e.target.value;
     const skillsArray = value.split(',').map(s => s.trim()).filter(s => s);
     setSkillsFormData(prev => ({ ...prev, [category]: skillsArray }));
   }, []);
@@ -493,6 +495,20 @@ const Dashboard = () => {
     );
   };
 
+  // Componente memoizado para cada input de skill
+  const SkillInput = React.memo(({ category, value, onChange }) => (
+    <div className="form-group">
+      <label>{category.charAt(0).toUpperCase() + category.slice(1)}</label>
+      <input
+        type="text"
+        name={category}
+        value={value}
+        onChange={onChange}
+        placeholder="Separadas por comas"
+      />
+    </div>
+  ));
+
   const renderContent = () => {
     switch (activeTab) {
       case 'personal':
@@ -631,15 +647,12 @@ const Dashboard = () => {
             </div>
             
             {Object.entries(skillsFormData).map(([category, skillList]) => (
-              <div key={category} className="form-group">
-                <label>{category.charAt(0).toUpperCase() + category.slice(1)}</label>
-                <input
-                  type="text"
-                  value={skillList.join(', ')}
-                  onChange={(e) => handleUpdateSkills(category, e.target.value)}
-                  placeholder="Separadas por comas"
-                />
-              </div>
+              <SkillInput
+                key={`skill-${category}`}
+                category={category}
+                value={skillList.join(', ')}
+                onChange={handleUpdateSkills}
+              />
             ))}
             
             <button type="submit" className="btn btn-primary">
