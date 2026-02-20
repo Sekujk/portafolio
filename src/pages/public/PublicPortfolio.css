@@ -297,12 +297,12 @@ body {
 /* Orden por defecto en desktop */
 .bento-skills { order: 1; }
 .bento-featured-project { order: 2; }
-.bento-edu-exp { order: 3; grid-column: span 2; }
+.bento-edu-exp { order: 3; }
 
 /* Orden por defecto en desktop */
 .bento-skills { order: 1; }
 .bento-featured-project { order: 2; }
-.bento-edu-exp { order: 3; grid-column: span 2; }
+.bento-edu-exp { order: 3; }
 
 .bento-item {
   background: var(--bg-card);
@@ -545,12 +545,13 @@ body {
 
 /* Educación y Experiencia combinadas */
 .bento-edu-exp {
-  grid-column: span 2;
+  grid-column: span 1;
+  grid-row: span 2;
 }
 
 .edu-exp-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 2rem;
   height: 100%;
 }
@@ -560,6 +561,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  flex: 1;
 }
 
 .edu-scroll-container,
@@ -568,7 +570,7 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   padding-right: 0.5rem;
-  max-height: 450px;
+  max-height: 350px;
 }
 
 /* Scrollbar personalizado */
@@ -1181,16 +1183,12 @@ body {
 
   .bento-edu-exp {
     grid-column: span 1;
-  }
-
-  .edu-exp-grid {
-    grid-template-columns: 1fr;
-    gap: 2rem;
+    grid-row: span 1;
   }
 
   .edu-scroll-container,
   .exp-scroll-container {
-    max-height: 350px;
+    max-height: 300px;
   }
 
   .hero-avatar {
