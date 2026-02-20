@@ -138,17 +138,17 @@ const Dashboard = () => {
     );
   }
 
-  const showSuccess = useCallback((message) => {
+  const showSuccess = (message) => {
     setSuccessMessage(message);
     setErrorMessage('');
     setTimeout(() => setSuccessMessage(''), 3000);
-  }, []);
+  };
 
-  const showError = useCallback((message) => {
+  const showError = (message) => {
     setErrorMessage(message);
     setSuccessMessage('');
     setTimeout(() => setErrorMessage(''), 5000);
-  }, []);
+  };
 
   const handleLogout = () => {
     logout();
@@ -219,11 +219,11 @@ const Dashboard = () => {
     }
   };
 
-  const handleSkillsSubmit = useCallback((e) => {
+  const handleSkillsSubmit = (e) => {
     e.preventDefault();
     updateSection('skills', skillsFormData);
     showSuccess('Habilidades actualizadas');
-  }, [updateSection, skillsFormData, showSuccess]);
+  };
 
   const handleAddSkillCategory = useCallback(() => {
     const categoryName = prompt('Nombre de la nueva categoría:');
