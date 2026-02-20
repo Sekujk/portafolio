@@ -11,7 +11,7 @@ import './Dashboard.css';
 
 const Dashboard = () => {
   const { logout, changePassword } = useAuth();
-  const { portfolioData, connectionError, updateSection, addItem, updateItem, deleteItem, resetToDefaults } = usePortfolio();
+  const { portfolioData, isLoading, connectionError, updateSection, addItem, updateItem, deleteItem, resetToDefaults } = usePortfolio();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('personal');
   const [successMessage, setSuccessMessage] = useState('');
@@ -54,8 +54,8 @@ const Dashboard = () => {
     }
   }, [portfolioData?.skills]);
 
-  // Si hay error de conexión, mostrar pantalla de error
-  if (connectionError || !portfolioData) {
+  // Si hay error de conexión, mostrar pantalla de error (solo si no está cargando)
+  if (!isLoading && (connectionError || !portfolioData)) {
     return (
       <div style={{
         display: 'flex',
@@ -136,6 +136,11 @@ const Dashboard = () => {
         </motion.div>
       </div>
     );
+  }
+
+  // Si todavía está cargando o no hay datos, no renderizar nada
+  if (isLoading || !portfolioData) {
+    return null;
   }
 
   const showSuccess = (message) => {
