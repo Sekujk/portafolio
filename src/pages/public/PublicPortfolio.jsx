@@ -198,8 +198,12 @@ const PublicPortfolio = () => {
                   return (
                     <>
                       <div className="featured-label">Proyecto Destacado</div>
-                      {featuredProject.image && (
+                      {featuredProject.image ? (
                         <img src={featuredProject.image} alt={featuredProject.title} className="featured-image" />
+                      ) : (
+                        <div className="featured-placeholder">
+                          <FaRocket className="featured-placeholder-icon" />
+                        </div>
                       )}
                       <div className="featured-content">
                         <h3>{featuredProject.title}</h3>
@@ -293,7 +297,7 @@ const PublicPortfolio = () => {
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: index * 0.1 }}
                 >
-                  {project.image && (
+                  {project.image ? (
                     <div className="project-image-wrapper">
                       <img src={project.image} alt={project.title} />
                       <div className="project-overlay">
@@ -310,6 +314,10 @@ const PublicPortfolio = () => {
                           )}
                         </div>
                       </div>
+                    </div>
+                  ) : (
+                    <div className="project-placeholder">
+                      <FaCode className="placeholder-icon" />
                     </div>
                   )}
                   <div className="project-info">
