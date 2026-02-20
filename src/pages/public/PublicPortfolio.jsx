@@ -287,29 +287,31 @@ const PublicPortfolio = () => {
               {projects.map((project, index) => (
                 <motion.div
                   key={project.id}
-                  className="project-card-modern"
+                  className={`project-card-modern ${!project.image ? 'no-image' : ''}`}
                   initial={{ opacity: 0, scale: 0.9 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: index * 0.1 }}
                 >
-                  <div className="project-image-wrapper">
-                    <img src={project.image} alt={project.title} />
-                    <div className="project-overlay">
-                      <div className="overlay-links">
-                        {project.github && (
-                          <a href={project.github} target="_blank" rel="noopener noreferrer">
-                            <FaGithub />
-                          </a>
-                        )}
-                        {project.demo && (
-                          <a href={project.demo} target="_blank" rel="noopener noreferrer">
-                            <FaExternalLinkAlt />
-                          </a>
-                        )}
+                  {project.image && (
+                    <div className="project-image-wrapper">
+                      <img src={project.image} alt={project.title} />
+                      <div className="project-overlay">
+                        <div className="overlay-links">
+                          {project.github && (
+                            <a href={project.github} target="_blank" rel="noopener noreferrer">
+                              <FaGithub />
+                            </a>
+                          )}
+                          {project.demo && (
+                            <a href={project.demo} target="_blank" rel="noopener noreferrer">
+                              <FaExternalLinkAlt />
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                   <div className="project-info">
                     <h3>{project.title}</h3>
                     <p>{project.description}</p>
@@ -319,6 +321,20 @@ const PublicPortfolio = () => {
                       ))}
                       {project.technologies.length > 3 && <span>+{project.technologies.length - 3}</span>}
                     </div>
+                    {!project.image && (project.github || project.demo) && (
+                      <div className="project-links-no-image">
+                        {project.github && (
+                          <a href={project.github} target="_blank" rel="noopener noreferrer">
+                            <FaGithub /> Código
+                          </a>
+                        )}
+                        {project.demo && (
+                          <a href={project.demo} target="_blank" rel="noopener noreferrer">
+                            <FaExternalLinkAlt /> Demo
+                          </a>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               ))}
