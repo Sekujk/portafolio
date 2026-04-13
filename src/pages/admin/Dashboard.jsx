@@ -63,25 +63,21 @@ const Dashboard = () => {
     return strings;
   });
 
-  // Sincronizar personalFormData cuando portfolioData cambie
   React.useEffect(() => {
     if (portfolioData?.personalInfo) {
       setPersonalFormData(portfolioData.personalInfo);
     }
   }, [portfolioData?.personalInfo]);
 
-  // Sincronizar projectItems cuando portfolioData.projects cambie
   React.useEffect(() => {
     if (portfolioData?.projects) {
       setProjectItems(portfolioData.projects);
     }
   }, [portfolioData?.projects]);
 
-  // Sincronizar skillsFormData y skillsInputStrings cuando portfolioData.skills cambie
   React.useEffect(() => {
     if (portfolioData?.skills) {
       setSkillsFormData(portfolioData.skills);
-      // Convertir arrays a strings para los inputs
       const strings = {};
       Object.entries(portfolioData.skills).forEach(([category, skillArray]) => {
         strings[category] = Array.isArray(skillArray) ? skillArray.join(', ') : '';
@@ -90,7 +86,6 @@ const Dashboard = () => {
     }
   }, [portfolioData?.skills]);
 
-  // Funciones de utilidad
   const showSuccess = (message) => {
     setSuccessMessage(message);
     setErrorMessage('');
@@ -125,13 +120,11 @@ const Dashboard = () => {
   const handleUpdateSkills = useCallback((e) => {
     const category = e.target.name;
     const value = e.target.value;
-    // Solo guardar el string directamente, sin transformaciones
     setSkillsInputStrings(prev => ({ ...prev, [category]: value }));
   }, []);
 
   const handleSkillsSubmit = (e) => {
     e.preventDefault();
-    // Convertir los strings a arrays antes de guardar
     const skillsToSave = {};
     Object.entries(skillsInputStrings).forEach(([category, skillString]) => {
       skillsToSave[category] = skillString
@@ -165,23 +158,21 @@ const Dashboard = () => {
 
   const handleSaveProject = () => {
     let projectToSave = { ...projectEditForm };
-    
-    // Si se marca como destacado, desmarcar todos los demás proyectos
+
     if (projectToSave.featured) {
       const currentProjects = portfolioData?.projects || [];
       const updatedProjects = currentProjects.map(p => ({
         ...p,
         featured: p.id === projectToSave.id ? true : false
       }));
-      
-      // Actualizar todos los proyectos primero
+
       updatedProjects.forEach(p => {
         if (p.id !== projectToSave.id && portfolioData) {
           updateItem('projects', p.id, { ...p, featured: false });
         }
       });
     }
-    
+
     if (projectIsAdding) {
       addItem('projects', projectToSave);
       showSuccess('Proyecto agregado');
@@ -261,14 +252,12 @@ const Dashboard = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validar tipo de archivo
     if (!file.type.startsWith('image/')) {
       showError('Solo se permiten archivos de imagen');
       setFileInputKey(Date.now());
       return;
     }
 
-    // Validar tamaño (máximo 2MB)
     if (file.size > 2 * 1024 * 1024) {
       showError('La imagen no debe superar 2MB');
       setFileInputKey(Date.now());
@@ -304,10 +293,9 @@ const Dashboard = () => {
 
       setPersonalFormData(prev => ({ ...prev, avatar: urlData.publicUrl }));
       showSuccess('Imagen subida correctamente');
-      // No resetear el input para mantener el nombre del archivo visible
     } catch (error) {
       showError(error.message || 'Error al subir la imagen');
-      setFileInputKey(Date.now()); // Solo resetear en caso de error
+      setFileInputKey(Date.now());
     } finally {
       setUploading(false);
     }
@@ -323,7 +311,6 @@ const Dashboard = () => {
     }
   };
 
-  // Si hay error de conexión, mostrar pantalla de error (solo si no está cargando)
   if (!isLoading && (connectionError || !portfolioData)) {
     return (
       <div style={{
@@ -407,12 +394,10 @@ const Dashboard = () => {
     );
   }
 
-  // Si todavía está cargando o no hay datos, no renderizar nada
   if (isLoading || !portfolioData) {
     return null;
   }
 
-  // Tabs de navegación
   const tabs = [
     { id: 'personal', name: 'Personal', icon: <FaUser /> },
     { id: 'education', name: 'Educación', icon: <FaGraduationCap /> },
@@ -423,7 +408,6 @@ const Dashboard = () => {
     { id: 'security', name: 'Seguridad', icon: <FaKey /> },
   ];
 
-  // Componente genérico para editar listas (educación, experiencia, etc.)
   const ListEditor = ({ section, title, fields }) => {
     const [items, setItems] = useState(portfolioData[section] || []);
     const [isAdding, setIsAdding] = useState(false);
@@ -827,8 +811,7 @@ const Dashboard = () => {
                         ))}
                       </div>
                     )}
-                    
-                    {/* Enlaces del proyecto */}
+
                     {(item.github || item.demo) && (
                       <div style={{ display: 'flex', gap: '10px', marginTop: '12px', marginBottom: '12px' }}>
                         {item.github && (
@@ -908,7 +891,6 @@ const Dashboard = () => {
     }
   };
 
-  // Componente para cambiar contraseña
   const SecurityEditor = () => {
     const [passwords, setPasswords] = useState({
       current: '',

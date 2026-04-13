@@ -7,7 +7,6 @@ import './PublicPortfolio.css';
 const PublicPortfolio = () => {
   const { portfolioData, isLoading, connectionError } = usePortfolio();
 
-  // Pantalla de error (solo mostrar si no está cargando y hay error o no hay datos)
   if (!isLoading && (connectionError || !portfolioData)) {
     return (
       <div style={{
@@ -77,7 +76,6 @@ const PublicPortfolio = () => {
     );
   }
 
-  // Si todavía está cargando o no hay datos, no renderizar nada
   if (isLoading || !portfolioData) {
     return null;
   }
@@ -86,7 +84,6 @@ const PublicPortfolio = () => {
 
   return (
     <div className="public-portfolio">
-      {/* Hero Section - Diseño Split */}
       <section className="hero-section">
         <div className="hero-grid">
           <motion.div
@@ -162,7 +159,6 @@ const PublicPortfolio = () => {
       <section className="bento-section">
         <div className="container">
           <div className="bento-grid">
-            {/* Skills Destacadas */}
             <motion.div
               className="bento-item bento-skills"
               initial={{ opacity: 0, y: 20 }}
@@ -184,7 +180,6 @@ const PublicPortfolio = () => {
               </div>
             </motion.div>
 
-            {/* Proyecto Destacado */}
             {projects && projects.find(p => p.featured) && (
               <motion.div
                 className="bento-item bento-featured-project"
@@ -232,7 +227,6 @@ const PublicPortfolio = () => {
               </motion.div>
             )}
 
-            {/* Educación y Experiencia combinadas */}
             {((education && education.length > 0) || (experience && experience.length > 0)) && (
               <motion.div
                 className="bento-item bento-edu-exp"
@@ -242,7 +236,6 @@ const PublicPortfolio = () => {
                 transition={{ delay: 0.2 }}
               >
                 <div className="edu-exp-grid">
-                  {/* Educación */}
                   {education && education.length > 0 && (
                     <div className="edu-column">
                       <h2 className="bento-title"><FaGraduationCap style={{ marginRight: '10px', verticalAlign: 'middle' }} />Educación</h2>
@@ -258,7 +251,6 @@ const PublicPortfolio = () => {
                     </div>
                   )}
 
-                  {/* Experiencia */}
                   {experience && experience.length > 0 && (
                     <div className="exp-column">
                       <h2 className="bento-title"><FaBriefcase style={{ marginRight: '10px', verticalAlign: 'middle' }} />Experiencia</h2>
@@ -282,7 +274,6 @@ const PublicPortfolio = () => {
         </div>
       </section>
 
-      {/* Proyectos Grid */}
       {projects && projects.length >= 1 && (
         <section className="projects-section">
           <div className="container">
@@ -354,7 +345,6 @@ const PublicPortfolio = () => {
         </section>
       )}
 
-      {/* Certificaciones Carrusel */}
       {certifications && certifications.length > 0 && (
         <section className="certifications-section">
           <div className="container">
@@ -388,7 +378,6 @@ const PublicPortfolio = () => {
         </section>
       )}
 
-      {/* CTA Final */}
       <section className="cta-section">
         <div className="container">
           <motion.div
@@ -413,7 +402,6 @@ const PublicPortfolio = () => {
         </div>
       </section>
 
-      {/* Footer Minimal */}
       <footer className="footer-modern">
         <div className="container">
           <div className="footer-content">
