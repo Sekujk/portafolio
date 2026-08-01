@@ -7,6 +7,7 @@ import {
 } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import { usePortfolio } from '../../context/PortfolioContext';
+import { supabase } from '../../config/supabase';
 import './Dashboard.css';
 
 // Componente memoizado para cada input de skill (FUERA del Dashboard para que React.memo funcione)
@@ -40,7 +41,7 @@ const getProjectRef = () => {
 
 const Dashboard = () => {
   const { logout, changePassword } = useAuth();
-  const { portfolioData, isLoading, connectionError, updateSection, addItem, updateItem, deleteItem, resetToDefaults } = usePortfolio();
+  const { portfolioData, isLoading, connectionError, updateSection, addItem, updateItem, deleteItem } = usePortfolio();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('personal');
   const [successMessage, setSuccessMessage] = useState('');
@@ -221,8 +222,6 @@ const Dashboard = () => {
     setUploadingProjectImage(true);
     
     try {
-      const { supabase } = await import('../../config/supabase');
-      
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
       const filePath = `projects/${fileName}`;
@@ -275,8 +274,6 @@ const Dashboard = () => {
     setUploading(true);
     
     try {
-      const { supabase } = await import('../../config/supabase');
-      
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;

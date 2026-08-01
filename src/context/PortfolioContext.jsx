@@ -257,20 +257,14 @@ export const PortfolioProvider = ({ children }) => {
     return { success: true };
   };
 
-  const resetToDefaults = async () => {
-    throw new Error('Para resetear los datos, edítalos manualmente desde el Dashboard o corre las migraciones de nuevo.');
-  };
-
   const value = {
     portfolioData,
     isLoading,
     connectionError,
-    savePortfolioData: updateSection,
     updateSection,
     addItem,
     updateItem,
     deleteItem,
-    resetToDefaults,
   };
 
   return (

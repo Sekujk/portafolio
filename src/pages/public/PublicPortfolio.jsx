@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FaGithub, FaLinkedin, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCode, FaBriefcase, FaGraduationCap, FaExclamationTriangle, FaDatabase, FaExternalLinkAlt, FaCertificate, FaRocket } from 'react-icons/fa';
+import { FaGithub, FaLinkedin, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCode, FaBriefcase, FaGraduationCap, FaExclamationTriangle, FaDatabase, FaExternalLinkAlt, FaRocket } from 'react-icons/fa';
 import { usePortfolio } from '../../context/PortfolioContext';
 import './PublicPortfolio.css';
 
 const PublicPortfolio = () => {
   const { portfolioData, isLoading, connectionError } = usePortfolio();
+  const [avatarError, setAvatarError] = useState(false);
+  const [featuredImageError, setFeaturedImageError] = useState(false);
+  const [brokenProjectImages, setBrokenProjectImages] = useState({});
 
   if (!isLoading && (connectionError || !portfolioData)) {
     return (
@@ -14,63 +17,98 @@ const PublicPortfolio = () => {
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+        position: 'relative',
+        overflow: 'hidden',
+        background: '#0f172a',
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif",
         padding: '2rem'
       }}>
+        <div style={{
+          position: 'absolute',
+          top: '-20%',
+          left: '-10%',
+          width: '600px',
+          height: '600px',
+          background: 'radial-gradient(circle, rgba(6, 182, 212, 0.18) 0%, transparent 70%)',
+          borderRadius: '50%',
+        }} />
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, y: 24, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
           style={{
-            background: 'white',
-            borderRadius: '20px',
+            background: '#ffffff',
+            borderRadius: '24px',
             padding: '3rem',
-            maxWidth: '600px',
+            maxWidth: '560px',
             textAlign: 'center',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+            border: '2px solid rgba(6, 182, 212, 0.25)',
+            boxShadow: '0 30px 60px -12px rgba(6, 182, 212, 0.2)',
+            position: 'relative',
+            zIndex: 1,
           }}
         >
-          <FaExclamationTriangle style={{ fontSize: '4rem', color: '#f5576c', marginBottom: '1.5rem' }} />
-          <h1 style={{ fontSize: '2rem', marginBottom: '1rem', color: '#333' }}>
-            Error de Conexión
+          <motion.div
+            animate={{ scale: [1, 1.08, 1] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+            style={{
+              width: '72px',
+              height: '72px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(139, 92, 246, 0.12) 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1.5rem',
+            }}
+          >
+            <FaExclamationTriangle style={{ fontSize: '1.75rem', color: '#0891b2' }} />
+          </motion.div>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.75rem', color: '#0f172a' }}>
+            No pudimos conectar
           </h1>
-          <p style={{ fontSize: '1.1rem', color: '#666', marginBottom: '1.5rem' }}>
+          <p style={{ fontSize: '1.05rem', color: '#64748b', marginBottom: '1.75rem', lineHeight: 1.6 }}>
             {connectionError || 'No se pudo cargar el portafolio'}
           </p>
           <div style={{
-            background: '#f8f9fa',
+            background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%)',
+            border: '1px solid rgba(6, 182, 212, 0.15)',
             padding: '1.5rem',
-            borderRadius: '12px',
+            borderRadius: '16px',
             textAlign: 'left',
-            fontSize: '0.95rem',
-            color: '#444',
-            marginBottom: '1.5rem'
+            fontSize: '0.9rem',
+            color: '#334155',
+            marginBottom: '1.75rem'
           }}>
-            <strong style={{ display: 'block', marginBottom: '0.5rem', color: '#f5576c' }}>
-              <FaDatabase style={{ marginRight: '0.5rem' }} />
-              Pasos para solucionar:
+            <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', color: '#0891b2', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <FaDatabase />
+              Pasos para solucionar
             </strong>
-            <ol style={{ marginLeft: '1.5rem', lineHeight: '1.8' }}>
+            <ol style={{ marginLeft: '1.25rem', lineHeight: '1.9' }}>
               <li>Verifica tu archivo <code>.env</code> con las credenciales correctas</li>
-              <li>Ejecuta el script <code>supabase-setup.sql</code> en Supabase Dashboard</li>
+              <li>Confirma que las migraciones estén aplicadas (<code>supabase db push</code>)</li>
               <li>Asegúrate de que el proyecto de Supabase esté activo</li>
               <li>Reinicia el servidor con <code>npm run dev</code></li>
             </ol>
           </div>
-          <button
+          <motion.button
             onClick={() => window.location.reload()}
+            whileHover={{ scale: 1.03, boxShadow: '0 8px 30px rgba(6, 182, 212, 0.5)' }}
+            whileTap={{ scale: 0.97 }}
             style={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)',
               color: 'white',
               border: 'none',
-              padding: '1rem 2rem',
+              padding: '0.9rem 2rem',
               borderRadius: '12px',
               fontSize: '1rem',
               cursor: 'pointer',
-              fontWeight: 'bold'
+              fontWeight: 700,
+              boxShadow: '0 4px 20px rgba(6, 182, 212, 0.35)',
             }}
           >
-            🔄 Reintentar
-          </button>
+            Reintentar
+          </motion.button>
         </motion.div>
       </div>
     );
@@ -114,41 +152,91 @@ const PublicPortfolio = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             <div className="hero-image-wrapper">
-              <img src={personalInfo.avatar} alt={personalInfo.name} className="hero-avatar" />
+              {personalInfo.avatar && !avatarError ? (
+                <img
+                  src={personalInfo.avatar}
+                  alt={personalInfo.name}
+                  className="hero-avatar"
+                  onError={() => setAvatarError(true)}
+                />
+              ) : (
+                <div className="hero-avatar hero-avatar-placeholder">
+                  {personalInfo.name?.charAt(0)?.toUpperCase() || '?'}
+                </div>
+              )}
               <div className="hero-stats">
-                <div className="stat-item">
+                <motion.div
+                  className="stat-item"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.5 }}
+                >
                   <FaBriefcase />
                   <span>{experience?.length || 0}+ Experiencias</span>
-                </div>
-                <div className="stat-item">
+                </motion.div>
+                <motion.div
+                  className="stat-item"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.6 }}
+                >
                   <FaCode />
                   <span>{projects?.length || 0}+ Proyectos</span>
-                </div>
-                <div className="stat-item">
+                </motion.div>
+                <motion.div
+                  className="stat-item"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.7 }}
+                >
                   <FaGraduationCap />
                   <span>{certifications?.length || 0}+ Certificaciones</span>
-                </div>
+                </motion.div>
               </div>
             </div>
 
             <div className="hero-contact-cards">
-              <a href={`mailto:${personalInfo.email}`} className="contact-card">
+              <motion.a
+                href={`mailto:${personalInfo.email}`}
+                className="contact-card"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.8 }}
+              >
                 <FaEnvelope />
                 <span>{personalInfo.email}</span>
-              </a>
-              <div className="contact-card">
+              </motion.a>
+              <motion.div
+                className="contact-card"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.88 }}
+              >
                 <FaPhone />
                 <span>{personalInfo.phone}</span>
-              </div>
-              <div className="contact-card">
+              </motion.div>
+              <motion.div
+                className="contact-card"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.96 }}
+              >
                 <FaMapMarkerAlt />
                 <span>{personalInfo.location}</span>
-              </div>
+              </motion.div>
               {personalInfo.linkedin && (
-                <a href={personalInfo.linkedin} target="_blank" rel="noopener noreferrer" className="contact-card">
+                <motion.a
+                  href={personalInfo.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="contact-card"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 1.04 }}
+                >
                   <FaLinkedin />
                   <span>LinkedIn</span>
-                </a>
+                </motion.a>
               )}
             </div>
           </motion.div>
@@ -167,15 +255,31 @@ const PublicPortfolio = () => {
             >
               <h2 className="bento-title">💻 Stack Técnico</h2>
               <div className="skills-compact">
-                {skills && Object.entries(skills).map(([category, skillList]) => (
-                  <div key={category} className="skill-row">
+                {skills && Object.entries(skills).map(([category, skillList], rowIndex) => (
+                  <motion.div
+                    key={category}
+                    className="skill-row"
+                    initial={{ opacity: 0, x: -12 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.35, delay: rowIndex * 0.1 }}
+                  >
                     <span className="skill-category-label">{category}</span>
                     <div className="skill-pills">
                       {skillList.map((skill, i) => (
-                        <span key={i} className="skill-pill">{skill}</span>
+                        <motion.span
+                          key={i}
+                          className="skill-pill"
+                          initial={{ opacity: 0, scale: 0.85 }}
+                          whileInView={{ opacity: 1, scale: 1 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.25, delay: rowIndex * 0.1 + i * 0.05 }}
+                        >
+                          {skill}
+                        </motion.span>
                       ))}
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </motion.div>
@@ -193,8 +297,13 @@ const PublicPortfolio = () => {
                   return (
                     <>
                       <div className="featured-label">Proyecto Destacado</div>
-                      {featuredProject.image ? (
-                        <img src={featuredProject.image} alt={featuredProject.title} className="featured-image" />
+                      {featuredProject.image && !featuredImageError ? (
+                        <img
+                          src={featuredProject.image}
+                          alt={featuredProject.title}
+                          className="featured-image"
+                          onError={() => setFeaturedImageError(true)}
+                        />
                       ) : (
                         <div className="featured-placeholder">
                           <FaRocket className="featured-placeholder-icon" />
@@ -240,12 +349,19 @@ const PublicPortfolio = () => {
                     <div className="edu-column">
                       <h2 className="bento-title"><FaGraduationCap style={{ marginRight: '10px', verticalAlign: 'middle' }} />Educación</h2>
                       <div className="edu-scroll-container">
-                        {education.map((edu) => (
-                          <div key={edu.id} className="edu-compact">
+                        {education.map((edu, i) => (
+                          <motion.div
+                            key={edu.id}
+                            className="edu-compact"
+                            initial={{ opacity: 0, x: -16 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.35, delay: i * 0.08 }}
+                          >
                             <h4>{edu.degree}</h4>
                             <p className="edu-institution">{edu.institution}</p>
                             <span className="edu-period">{edu.period}</span>
-                          </div>
+                          </motion.div>
                         ))}
                       </div>
                     </div>
@@ -255,14 +371,21 @@ const PublicPortfolio = () => {
                     <div className="exp-column">
                       <h2 className="bento-title"><FaBriefcase style={{ marginRight: '10px', verticalAlign: 'middle' }} />Experiencia</h2>
                       <div className="exp-scroll-container">
-                        {experience.map((exp) => (
-                          <div key={exp.id} className="exp-compact">
+                        {experience.map((exp, i) => (
+                          <motion.div
+                            key={exp.id}
+                            className="exp-compact"
+                            initial={{ opacity: 0, x: 16 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.35, delay: i * 0.08 }}
+                          >
                             <div className="exp-header">
                               <h4>{exp.position}</h4>
                               <span className="exp-period">{exp.period}</span>
                             </div>
                             <p className="exp-company">{exp.company}</p>
-                          </div>
+                          </motion.div>
                         ))}
                       </div>
                     </div>
@@ -282,18 +405,24 @@ const PublicPortfolio = () => {
               <p className="section-subtitle">Explora más de mi trabajo</p>
             </div>
             <div className="projects-masonry">
-              {projects.map((project, index) => (
+              {projects.map((project, index) => {
+                const hasWorkingImage = project.image && !brokenProjectImages[project.id];
+                return (
                 <motion.div
                   key={project.id}
-                  className={`project-card-modern ${!project.image ? 'no-image' : ''}`}
+                  className={`project-card-modern ${!hasWorkingImage ? 'no-image' : ''}`}
                   initial={{ opacity: 0, scale: 0.9 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: index * 0.1 }}
                 >
-                  {project.image ? (
+                  {hasWorkingImage ? (
                     <div className="project-image-wrapper">
-                      <img src={project.image} alt={project.title} />
+                      <img
+                        src={project.image}
+                        alt={project.title}
+                        onError={() => setBrokenProjectImages((prev) => ({ ...prev, [project.id]: true }))}
+                      />
                       <div className="project-overlay">
                         <div className="overlay-links">
                           {project.github && (
@@ -323,7 +452,7 @@ const PublicPortfolio = () => {
                       ))}
                       {project.technologies.length > 3 && <span>+{project.technologies.length - 3}</span>}
                     </div>
-                    {!project.image && (project.github || project.demo) && (
+                    {!hasWorkingImage && (project.github || project.demo) && (
                       <div className="project-links-no-image">
                         {project.github && (
                           <a href={project.github} target="_blank" rel="noopener noreferrer">
@@ -339,7 +468,8 @@ const PublicPortfolio = () => {
                     )}
                   </div>
                 </motion.div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
