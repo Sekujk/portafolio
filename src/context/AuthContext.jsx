@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import bcrypt from 'bcryptjs';
 import { supabase } from '../config/supabase';
 
 const AuthContext = createContext();
@@ -17,78 +16,39 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const authToken = sessionStorage.getItem('authToken');
-    const authExpiry = sessionStorage.getItem('authExpiry');
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+      setIsLoading(false);
+    });
 
-    if (authToken && authExpiry) {
-      const now = new Date().getTime();
-      if (now < parseInt(authExpiry)) {
-        setIsAuthenticated(true);
-      } else {
-        sessionStorage.removeItem('authToken');
-        sessionStorage.removeItem('authExpiry');
-      }
-    }
-    setIsLoading(false);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const getPasswordHash = async () => {
+  const login = async (email, password) => {
     try {
-      const { data, error } = await supabase
-        .from('admin_auth')
-        .select('password_hash')
-        .eq('user_id', 'default')
-        .single();
+      if (!email || !password) {
+        return { success: false, error: 'Ingresa tu email y contraseña' };
+      }
+
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
-        throw new Error('No se pudo obtener la contraseña desde Supabase. Verifica tu conexión y que ejecutaste el script SQL.');
+        return { success: false, error: 'Email o contraseña incorrectos' };
       }
 
-      if (!data?.password_hash) {
-        throw new Error('No hay contraseña configurada en Supabase. Ejecuta el script SQL primero.');
-      }
-
-      return data.password_hash;
-    } catch (error) {
-      console.error('❌ ERROR DE CONEXIÓN A SUPABASE:', error);
-      throw error;
-    }
-  };
-
-  const login = async (password) => {
-    try {
-      if (!password || password.trim() === '') {
-        return { success: false, error: 'Por favor ingrese una contraseña' };
-      }
-
-      const storedHash = await getPasswordHash();
-
-      const isValid = await bcrypt.compare(password, storedHash);
-
-      if (isValid) {
-        const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
-        const expiry = new Date().getTime() + (2 * 60 * 60 * 1000);
-
-        sessionStorage.setItem('authToken', token);
-        sessionStorage.setItem('authExpiry', expiry.toString());
-        setIsAuthenticated(true);
-
-        console.log('✅ Login exitoso');
-        return { success: true };
-      } else {
-        console.log('❌ Contraseña incorrecta');
-        return { success: false, error: 'Contraseña incorrecta' };
-      }
+      return { success: true };
     } catch (error) {
       console.error('Error en login:', error);
-      return { success: false, error: 'Error al verificar la contraseña' };
+      return { success: false, error: 'Error al iniciar sesión' };
     }
   };
 
-  const logout = () => {
-    sessionStorage.removeItem('authToken');
-    sessionStorage.removeItem('authExpiry');
-    setIsAuthenticated(false);
+  const logout = async () => {
+    await supabase.auth.signOut();
   };
 
   const changePassword = async (currentPassword, newPassword) => {
@@ -101,25 +61,26 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: 'La nueva contraseña debe tener al menos 6 caracteres' };
       }
 
-      const storedHash = await getPasswordHash();
-      const isValid = await bcrypt.compare(currentPassword, storedHash);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) {
+        return { success: false, error: 'No hay sesión activa' };
+      }
 
-      if (!isValid) {
+      // Reautenticar con la contraseña actual antes de cambiarla
+      const { error: reauthError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      });
+
+      if (reauthError) {
         return { success: false, error: 'Contraseña actual incorrecta' };
       }
 
-      const newHash = await bcrypt.hash(newPassword, 10);
+      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
 
-      const { error } = await supabase
-        .from('admin_auth')
-        .update({ password_hash: newHash })
-        .eq('user_id', 'default');
-
-      if (error) {
-        throw new Error('No se pudo actualizar la contraseña en Supabase: ' + error.message);
+      if (updateError) {
+        throw new Error(updateError.message);
       }
-
-      console.log('✅ Contraseña actualizada en Supabase');
 
       return { success: true, message: 'Contraseña actualizada correctamente' };
     } catch (error) {

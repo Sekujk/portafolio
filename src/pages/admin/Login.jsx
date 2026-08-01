@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import './Login.css';
 
 const Login = () => {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -18,10 +19,10 @@ const Login = () => {
     setError('');
     setIsLoading(true);
 
-    const result = await login(password);
-    
+    const result = await login(email, password);
+
     setIsLoading(false);
-    
+
     if (result.success) {
       navigate('/admin/dashboard');
     } else {
@@ -46,6 +47,21 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
+            <label htmlFor="email">
+              <FaUser /> Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tu@email.com"
+              required
+              autoFocus
+            />
+          </div>
+
+          <div className="form-group">
             <label htmlFor="password">
               <FaUser /> Contraseña
             </label>
@@ -57,7 +73,6 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Ingrese la contraseña de administrador"
                 required
-                autoFocus
               />
               <button
                 type="button"

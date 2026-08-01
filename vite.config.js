@@ -20,17 +20,4 @@ export default defineConfig({
       }
     }
   },
-  resolve: {
-    alias: {
-      // Fix para bcryptjs en el navegador
-      crypto: 'crypto-browserify',
-      stream: 'stream-browserify',
-      buffer: 'buffer'
-    }
-  },
-  define: {
-    // Polyfills para Node.js globals en el navegador
-    'process.env': {},
-    global: 'globalThis'
-  }
 })
