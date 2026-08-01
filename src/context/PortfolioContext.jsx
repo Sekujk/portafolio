@@ -150,9 +150,9 @@ export const PortfolioProvider = ({ children }) => {
         projects: (projectsRes.data || []).map(mapProjectFromDb),
         certifications: (certificationsRes.data || []).map(mapCertificationFromDb),
       });
-      console.log('✅ Datos cargados desde Supabase');
+      console.log('Datos cargados desde Supabase');
     } catch (error) {
-      console.error('❌ ERROR DE CONEXIÓN A SUPABASE:', error);
+      console.error('ERROR DE CONEXIÓN A SUPABASE:', error);
       setConnectionError(error.message || 'No se pudo conectar a Supabase. Verifica tu configuración.');
       setPortfolioData(null);
     } finally {
@@ -214,7 +214,7 @@ export const PortfolioProvider = ({ children }) => {
       setIsLoading(false);
       return { success: true };
     } catch (error) {
-      console.error('❌ ERROR AL GUARDAR EN SUPABASE:', error);
+      console.error('ERROR AL GUARDAR EN SUPABASE:', error);
       setIsLoading(false);
       throw new Error('No se pudo guardar en Supabase: ' + error.message);
     }

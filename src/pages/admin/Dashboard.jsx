@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   FaUser, FaGraduationCap, FaBriefcase, FaTools, FaProjectDiagram,
-  FaCertificate, FaSignOutAlt, FaKey, FaSave, FaTrash, FaPlus, FaEye, FaExclamationTriangle
+  FaCertificate, FaSignOutAlt, FaKey, FaSave, FaTrash, FaPlus, FaEye
 } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import { usePortfolio } from '../../context/PortfolioContext';
@@ -29,6 +29,14 @@ const SkillInput = React.memo(({ category, value, onChange }) => {
   return prevProps.category === nextProps.category && prevProps.value === nextProps.value;
 });
 SkillInput.displayName = 'SkillInput';
+
+const getProjectRef = () => {
+  try {
+    return new URL(import.meta.env.VITE_SUPABASE_URL).hostname.split('.')[0];
+  } catch {
+    return 'unknown';
+  }
+};
 
 const Dashboard = () => {
   const { logout, changePassword } = useAuth();
@@ -318,77 +326,84 @@ const Dashboard = () => {
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: '#f6f7f5',
+        fontFamily: "'IBM Plex Sans', sans-serif",
         padding: '2rem'
       }}>
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
           style={{
-            background: 'white',
-            borderRadius: '20px',
-            padding: '3rem',
-            maxWidth: '600px',
-            textAlign: 'center',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+            background: '#ffffff',
+            border: '1px solid #c7cdd6',
+            borderTop: '3px solid #b3261e',
+            padding: '2.25rem',
+            maxWidth: '520px',
+            textAlign: 'left',
           }}
         >
-          <FaExclamationTriangle style={{ fontSize: '4rem', color: '#f5576c', marginBottom: '1.5rem' }} />
-          <h1 style={{ fontSize: '2rem', marginBottom: '1rem', color: '#333' }}>
+          <div style={{
+            fontFamily: "'IBM Plex Mono', monospace",
+            fontSize: '0.75rem',
+            letterSpacing: '0.06em',
+            color: '#b3261e',
+            marginBottom: '0.9rem',
+          }}>
+            connection.failed
+          </div>
+          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: '1.375rem', fontWeight: 600, marginBottom: '0.75rem', color: '#14181f' }}>
             No se puede acceder al Dashboard
           </h1>
-          <p style={{ fontSize: '1.1rem', color: '#666', marginBottom: '1.5rem' }}>
+          <p style={{ fontSize: '0.9rem', color: '#667085', marginBottom: '1.5rem', lineHeight: 1.6 }}>
             {connectionError || 'Error de conexión con Supabase'}
           </p>
           <div style={{
-            background: '#f8f9fa',
-            padding: '1.5rem',
-            borderRadius: '12px',
-            textAlign: 'left',
-            fontSize: '0.95rem',
-            color: '#444',
-            marginBottom: '1.5rem'
+            background: '#f6f7f5',
+            border: '1px solid #dfe3e8',
+            padding: '1.25rem 1.5rem',
+            fontSize: '0.85rem',
+            color: '#14181f',
+            marginBottom: '1.5rem',
           }}>
-            <strong style={{ display: 'block', marginBottom: '0.5rem', color: '#f5576c' }}>
-              ⚠️ Requisitos:
+            <strong style={{ display: 'block', marginBottom: '0.6rem', fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.75rem', color: '#667085', textTransform: 'lowercase' }}>
+              requisitos
             </strong>
-            <ol style={{ marginLeft: '1.5rem', lineHeight: '1.8' }}>
+            <ol style={{ marginLeft: '1.25rem', lineHeight: '1.8' }}>
               <li>Archivo <code>.env</code> con credenciales correctas</li>
-              <li>Script <code>supabase-setup.sql</code> ejecutado en Supabase</li>
+              <li>Migraciones aplicadas (<code>supabase db push</code>)</li>
               <li>Proyecto de Supabase activo</li>
             </ol>
           </div>
-          <button
-            onClick={() => window.location.reload()}
-            style={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              border: 'none',
-              padding: '1rem 2rem',
-              borderRadius: '12px',
-              fontSize: '1rem',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              marginRight: '1rem'
-            }}
-          >
-            🔄 Reintentar
-          </button>
-          <button
-            onClick={() => navigate('/admin')}
-            style={{
-              background: '#6c757d',
-              color: 'white',
-              border: 'none',
-              padding: '1rem 2rem',
-              borderRadius: '12px',
-              fontSize: '1rem',
-              cursor: 'pointer',
-              fontWeight: 'bold'
-            }}
-          >
-            ← Volver al Login
-          </button>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                background: '#14181f',
+                color: '#f6f7f5',
+                border: 'none',
+                padding: '0.75rem 1.25rem',
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: '0.8125rem',
+                cursor: 'pointer',
+              }}
+            >
+              Reintentar
+            </button>
+            <button
+              onClick={() => navigate('/admin')}
+              style={{
+                background: '#ffffff',
+                color: '#667085',
+                border: '1px solid #c7cdd6',
+                padding: '0.75rem 1.25rem',
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: '0.8125rem',
+                cursor: 'pointer',
+              }}
+            >
+              Volver al login
+            </button>
+          </div>
         </motion.div>
       </div>
     );
@@ -400,11 +415,11 @@ const Dashboard = () => {
 
   const tabs = [
     { id: 'personal', name: 'Personal', icon: <FaUser /> },
-    { id: 'education', name: 'Educación', icon: <FaGraduationCap /> },
-    { id: 'experience', name: 'Experiencia', icon: <FaBriefcase /> },
-    { id: 'skills', name: 'Habilidades', icon: <FaTools /> },
-    { id: 'projects', name: 'Proyectos', icon: <FaProjectDiagram /> },
-    { id: 'certifications', name: 'Certificaciones', icon: <FaCertificate /> },
+    { id: 'education', name: 'Educación', icon: <FaGraduationCap />, count: portfolioData.education?.length ?? 0 },
+    { id: 'experience', name: 'Experiencia', icon: <FaBriefcase />, count: portfolioData.experience?.length ?? 0 },
+    { id: 'skills', name: 'Habilidades', icon: <FaTools />, count: Object.values(portfolioData.skills || {}).flat().length },
+    { id: 'projects', name: 'Proyectos', icon: <FaProjectDiagram />, count: portfolioData.projects?.length ?? 0 },
+    { id: 'certifications', name: 'Certificaciones', icon: <FaCertificate />, count: portfolioData.certifications?.length ?? 0 },
     { id: 'security', name: 'Seguridad', icon: <FaKey /> },
   ];
 
@@ -618,8 +633,8 @@ const Dashboard = () => {
                   disabled={uploading}
                 />
                 {uploading && (
-                  <div style={{ marginTop: '10px', color: '#667eea', fontWeight: 'bold' }}>
-                    ⏳ Subiendo imagen...
+                  <div style={{ marginTop: '10px', color: '#0e7490', fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.8125rem' }}>
+                    Subiendo imagen...
                   </div>
                 )}
               </div>
@@ -741,8 +756,8 @@ const Dashboard = () => {
                       disabled={uploadingProjectImage}
                     />
                     {uploadingProjectImage && (
-                      <div style={{ marginTop: '10px', color: '#667eea', fontWeight: 'bold' }}>
-                        ⏳ Subiendo imagen...
+                      <div style={{ marginTop: '10px', color: '#0e7490', fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.8125rem' }}>
+                        Subiendo imagen...
                       </div>
                     )}
                   </div>
@@ -972,7 +987,7 @@ const Dashboard = () => {
         </form>
 
         <div className="security-info">
-          <h4>💡 Consejos de Seguridad</h4>
+          <h4>Consejos de Seguridad</h4>
           <ul>
             <li>Usa al menos 8 caracteres</li>
             <li>Combina letras mayúsculas y minúsculas</li>
@@ -999,6 +1014,15 @@ const Dashboard = () => {
         </div>
       </div>
 
+      <div className="connection-strip">
+        <span className="connection-dot" />
+        <span className="connection-label">supabase</span>
+        <span className="connection-sep">/</span>
+        <span className="connection-ref">{getProjectRef()}</span>
+        <span className="connection-sep">·</span>
+        <span className="connection-label">connected</span>
+      </div>
+
       {successMessage && (
         <motion.div
           className="success-banner"
@@ -1006,7 +1030,7 @@ const Dashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
         >
-          ✅ {successMessage}
+          {successMessage}
         </motion.div>
       )}
 
@@ -1017,7 +1041,7 @@ const Dashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
         >
-          ❌ {errorMessage}
+          {errorMessage}
         </motion.div>
       )}
 
@@ -1031,6 +1055,7 @@ const Dashboard = () => {
             >
               {tab.icon}
               <span>{tab.name}</span>
+              {typeof tab.count === 'number' && <span className="tab-count">{tab.count}</span>}
             </button>
           ))}
         </div>

@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true, message: 'Contraseña actualizada correctamente' };
     } catch (error) {
-      console.error('❌ ERROR al cambiar contraseña:', error);
+      console.error('ERROR al cambiar contraseña:', error);
       return { success: false, error: error.message || 'Error al cambiar la contraseña' };
     }
   };
