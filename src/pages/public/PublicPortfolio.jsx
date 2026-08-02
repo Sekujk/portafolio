@@ -1,8 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaGithub, FaLinkedin, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCode, FaBriefcase, FaGraduationCap, FaExclamationTriangle, FaDatabase, FaExternalLinkAlt, FaRocket } from 'react-icons/fa';
 import { usePortfolio } from '../../context/PortfolioContext';
 import './PublicPortfolio.css';
+
+// Cuenta de 0 al valor real cuando el componente aparece en pantalla
+const AnimatedCounter = ({ value, delay = 0 }) => {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!value) {
+      setCount(0);
+      return;
+    }
+    const duration = 900;
+    let raf;
+    const timeout = setTimeout(() => {
+      const startTime = performance.now();
+      const tick = (now) => {
+        const progress = Math.min((now - startTime) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setCount(Math.round(eased * value));
+        if (progress < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    }, delay * 1000);
+    return () => {
+      clearTimeout(timeout);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [value, delay]);
+
+  return count;
+};
 
 const PublicPortfolio = () => {
   const { portfolioData, isLoading, connectionError } = usePortfolio();
@@ -172,7 +202,7 @@ const PublicPortfolio = () => {
                   transition={{ duration: 0.4, delay: 0.5 }}
                 >
                   <FaBriefcase />
-                  <span>{experience?.length || 0}+ Experiencias</span>
+                  <span><AnimatedCounter value={experience?.length || 0} delay={0.5} />+ Experiencias</span>
                 </motion.div>
                 <motion.div
                   className="stat-item"
@@ -181,7 +211,7 @@ const PublicPortfolio = () => {
                   transition={{ duration: 0.4, delay: 0.6 }}
                 >
                   <FaCode />
-                  <span>{projects?.length || 0}+ Proyectos</span>
+                  <span><AnimatedCounter value={projects?.length || 0} delay={0.6} />+ Proyectos</span>
                 </motion.div>
                 <motion.div
                   className="stat-item"
@@ -190,7 +220,7 @@ const PublicPortfolio = () => {
                   transition={{ duration: 0.4, delay: 0.7 }}
                 >
                   <FaGraduationCap />
-                  <span>{certifications?.length || 0}+ Certificaciones</span>
+                  <span><AnimatedCounter value={certifications?.length || 0} delay={0.7} />+ Certificaciones</span>
                 </motion.div>
               </div>
             </div>
