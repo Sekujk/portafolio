@@ -88,10 +88,11 @@ const mapEducationToDb = (item) => ({
   description: item.description,
 });
 
-const mapExperienceFromDb = (row) => ({ ...row, achievements: row.achievements || [] });
+const mapExperienceFromDb = (row) => ({ ...row, position: row.role, achievements: row.achievements || [] });
 const mapExperienceToDb = (item) => ({
   company: item.company,
-  position: item.position,
+  role: item.position,
+  location: item.location,
   period: item.period,
   description: item.description,
   achievements: item.achievements || [],
