@@ -1,0 +1,133 @@
+.economic-explainer {
+  min-height: 100vh;
+  background: var(--bg-dark, #0f172a);
+  color: #e2e8f0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  padding-bottom: 4rem;
+}
+
+.economic-explainer .container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.ee-header {
+  padding: 3rem 0 2.5rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+  margin-bottom: 2.5rem;
+}
+
+.ee-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  transition: color 0.2s;
+}
+
+.ee-back-link:hover {
+  color: #06b6d4;
+}
+
+.ee-header h1 {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  margin: 0 0 0.75rem;
+  background: linear-gradient(135deg, #06b6d4, #22d3ee);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ee-subtitle {
+  color: #94a3b8;
+  max-width: 640px;
+  line-height: 1.6;
+  margin: 0 0 1.25rem;
+}
+
+.ee-repo-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #e2e8f0;
+  text-decoration: none;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.ee-repo-link:hover {
+  border-color: #06b6d4;
+  color: #22d3ee;
+}
+
+.ee-status {
+  text-align: center;
+  color: #94a3b8;
+  padding: 3rem 0;
+}
+
+.ee-error {
+  color: #f87171;
+}
+
+.ee-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+
+.ee-card {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.ee-card h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.ee-valor {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #22d3ee;
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.ee-unidad {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+.ee-fecha {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0.35rem 0 1rem;
+}
+
+.ee-sube {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.ee-baja {
+  color: #f87171;
+  font-weight: 600;
+}
+
+.ee-chart {
+  margin-top: 0.5rem;
+}

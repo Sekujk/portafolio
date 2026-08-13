@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './context/AuthContext';
 import { PortfolioProvider } from './context/PortfolioContext';
 import PublicPortfolio from './pages/public/PublicPortfolio';
+import EconomicExplainer from './pages/public/EconomicExplainer';
 import Login from './pages/admin/Login';
 import Dashboard from './pages/admin/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -16,6 +17,7 @@ function App() {
           <Routes>
             {/* Ruta pública */}
             <Route path="/" element={<PublicPortfolio />} />
+            <Route path="/proyectos/explicador-economico" element={<EconomicExplainer />} />
             
             {/* Rutas de administración */}
             <Route path="/admin" element={<Login />} />
