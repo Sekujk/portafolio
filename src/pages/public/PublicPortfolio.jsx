@@ -428,13 +428,19 @@ const PublicPortfolio = () => {
       </section>
 
       {(() => {
-        const proyectosRestantes = (projects || []).filter((p) => !p.featured);
+        // Excluye solo el proyecto que efectivamente se muestra como destacado
+        // (por id), no "todos los featured" -- así, si alguna vez hay más de un
+        // proyecto marcado como featured (nada en la base de datos lo impide,
+        // solo una convención en el Dashboard), ninguno desaparece de la
+        // página: el resto simplemente cae en esta lista en vez de perderse.
+        const proyectoDestacado = (projects || []).find((p) => p.featured);
+        const proyectosRestantes = (projects || []).filter((p) => p.id !== proyectoDestacado?.id);
         if (proyectosRestantes.length === 0) return null;
         return (
       <section className="projects-section">
           <div className="container">
             <div className="section-header">
-              <h2 className="section-title-modern">{projects.some(p => p.featured) ? 'Otros Proyectos' : 'Proyectos'}</h2>
+              <h2 className="section-title-modern">{proyectoDestacado ? 'Otros Proyectos' : 'Proyectos'}</h2>
               <p className="section-subtitle">Explora más de mi trabajo</p>
             </div>
             <div className="projects-masonry">
