@@ -1080,6 +1080,13 @@ body {
     grid-row: span 1;
   }
 
+  /* La grilla ya es de una sola columna desde acá (1024px) -- reordenar
+     para priorizar el proyecto destacado antes que el stack técnico,
+     no solo por debajo de 768px. */
+  .bento-featured-project { order: 1; }
+  .bento-skills { order: 2; }
+  .bento-edu-exp { order: 3; }
+
   .edu-scroll-container,
   .exp-scroll-container {
     max-height: 300px;
@@ -1183,11 +1190,6 @@ body {
     flex-direction: row;
     justify-content: center;
   }
-
-  /* Reordenar bento items en móvil para priorizar proyectos */
-  .bento-featured-project { order: 1; }
-  .bento-skills { order: 2; }
-  .bento-edu-exp { order: 3; }
 
   .bento-item {
     padding: 1.5rem;

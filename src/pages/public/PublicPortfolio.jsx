@@ -427,15 +427,18 @@ const PublicPortfolio = () => {
         </div>
       </section>
 
-      {projects && projects.length >= 1 && (
-        <section className="projects-section">
+      {(() => {
+        const proyectosRestantes = (projects || []).filter((p) => !p.featured);
+        if (proyectosRestantes.length === 0) return null;
+        return (
+      <section className="projects-section">
           <div className="container">
             <div className="section-header">
               <h2 className="section-title-modern">{projects.some(p => p.featured) ? 'Otros Proyectos' : 'Proyectos'}</h2>
               <p className="section-subtitle">Explora más de mi trabajo</p>
             </div>
             <div className="projects-masonry">
-              {projects.map((project, index) => {
+              {proyectosRestantes.map((project, index) => {
                 const hasWorkingImage = project.image && !brokenProjectImages[project.id];
                 return (
                 <motion.div
@@ -503,7 +506,8 @@ const PublicPortfolio = () => {
             </div>
           </div>
         </section>
-      )}
+        );
+      })()}
 
       {certifications && certifications.length > 0 && (
         <section className="certifications-section">
