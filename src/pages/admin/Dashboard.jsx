@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   FaUser, FaGraduationCap, FaBriefcase, FaTools, FaProjectDiagram,
-  FaCertificate, FaSignOutAlt, FaKey, FaSave, FaTrash, FaPlus, FaEye
+  FaCertificate, FaSignOutAlt, FaKey, FaSave, FaTrash, FaPlus, FaEye,
+  FaStar, FaGithub, FaExternalLinkAlt, FaExclamationTriangle, FaDatabase
 } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import { usePortfolio } from '../../context/PortfolioContext';
@@ -41,7 +42,7 @@ const getProjectRef = () => {
 
 const Dashboard = () => {
   const { logout, changePassword } = useAuth();
-  const { portfolioData, isLoading, connectionError, updateSection, addItem, updateItem, deleteItem } = usePortfolio();
+  const { portfolioData, isLoading, connectionError, updateSection, addItem, updateItem, deleteItem, setFeaturedProject } = usePortfolio();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('personal');
   const [successMessage, setSuccessMessage] = useState('');
@@ -59,6 +60,7 @@ const Dashboard = () => {
   const [uploadingProjectImage, setUploadingProjectImage] = useState(false);
   const [projectImageKey, setProjectImageKey] = useState(Date.now());
   const [projectItems, setProjectItems] = useState(portfolioData?.projects || []);
+  const [savingFeatured, setSavingFeatured] = useState(false);
 
   // Estado del formulario de skills para persistir
   const [skillsFormData, setSkillsFormData] = useState(portfolioData?.skills || {});
@@ -166,21 +168,9 @@ const Dashboard = () => {
   };
 
   const handleSaveProject = () => {
-    let projectToSave = { ...projectEditForm };
-
-    if (projectToSave.featured) {
-      const currentProjects = portfolioData?.projects || [];
-      const updatedProjects = currentProjects.map(p => ({
-        ...p,
-        featured: p.id === projectToSave.id ? true : false
-      }));
-
-      updatedProjects.forEach(p => {
-        if (p.id !== projectToSave.id && portfolioData) {
-          updateItem('projects', p.id, { ...p, featured: false });
-        }
-      });
-    }
+    // "featured" ya no se decide acá -- lo controla el selector único de
+    // arriba (setFeaturedProject), que es la única fuente de verdad.
+    const projectToSave = { ...projectEditForm };
 
     if (projectIsAdding) {
       addItem('projects', projectToSave);
@@ -193,6 +183,20 @@ const Dashboard = () => {
     setProjectIsAdding(false);
     setProjectItems(portfolioData?.projects || []);
     setProjectImageKey(Date.now());
+  };
+
+  const handleFeaturedChange = async (e) => {
+    const projectId = e.target.value || null;
+    setSavingFeatured(true);
+    try {
+      await setFeaturedProject(projectId);
+      setProjectItems(portfolioData?.projects || []);
+      showSuccess(projectId ? 'Proyecto destacado actualizado' : 'Ya no hay proyecto destacado');
+    } catch (error) {
+      showError(error.message || 'No se pudo actualizar el proyecto destacado');
+    } finally {
+      setSavingFeatured(false);
+    }
   };
 
   const handleDeleteProject = (id) => {
@@ -318,86 +322,28 @@ const Dashboard = () => {
 
   if (!isLoading && (connectionError || !portfolioData)) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        background: '#f6f7f5',
-        fontFamily: "'IBM Plex Sans', sans-serif",
-        padding: '2rem'
-      }}>
+      <div className="connection-error-screen">
         <motion.div
+          className="connection-error-card"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          style={{
-            background: '#ffffff',
-            border: '1px solid #c7cdd6',
-            borderTop: '3px solid #b3261e',
-            padding: '2.25rem',
-            maxWidth: '520px',
-            textAlign: 'left',
-          }}
         >
-          <div style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: '0.75rem',
-            letterSpacing: '0.06em',
-            color: '#b3261e',
-            marginBottom: '0.9rem',
-          }}>
-            connection.failed
-          </div>
-          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: '1.375rem', fontWeight: 600, marginBottom: '0.75rem', color: '#14181f' }}>
-            No se puede acceder al Dashboard
-          </h1>
-          <p style={{ fontSize: '0.9rem', color: '#667085', marginBottom: '1.5rem', lineHeight: 1.6 }}>
-            {connectionError || 'Error de conexión con Supabase'}
-          </p>
-          <div style={{
-            background: '#f6f7f5',
-            border: '1px solid #dfe3e8',
-            padding: '1.25rem 1.5rem',
-            fontSize: '0.85rem',
-            color: '#14181f',
-            marginBottom: '1.5rem',
-          }}>
-            <strong style={{ display: 'block', marginBottom: '0.6rem', fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.75rem', color: '#667085', textTransform: 'lowercase' }}>
-              requisitos
-            </strong>
-            <ol style={{ marginLeft: '1.25rem', lineHeight: '1.8' }}>
+          <div className="connection-error-tag">connection.failed</div>
+          <h1>No se puede acceder al Dashboard</h1>
+          <p>{connectionError || 'Error de conexión con Supabase'}</p>
+          <div className="connection-error-requirements">
+            <strong>requisitos</strong>
+            <ol>
               <li>Archivo <code>.env</code> con credenciales correctas</li>
               <li>Migraciones aplicadas (<code>supabase db push</code>)</li>
               <li>Proyecto de Supabase activo</li>
             </ol>
           </div>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button
-              onClick={() => window.location.reload()}
-              style={{
-                background: '#14181f',
-                color: '#f6f7f5',
-                border: 'none',
-                padding: '0.75rem 1.25rem',
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: '0.8125rem',
-                cursor: 'pointer',
-              }}
-            >
+          <div className="connection-error-actions">
+            <button onClick={() => window.location.reload()} className="btn btn-primary">
               Reintentar
             </button>
-            <button
-              onClick={() => navigate('/admin')}
-              style={{
-                background: '#ffffff',
-                color: '#667085',
-                border: '1px solid #c7cdd6',
-                padding: '0.75rem 1.25rem',
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: '0.8125rem',
-                cursor: 'pointer',
-              }}
-            >
+            <button onClick={() => navigate('/admin')} className="btn btn-secondary">
               Volver al login
             </button>
           </div>
@@ -614,12 +560,8 @@ const Dashboard = () => {
               <div className="form-group full-width">
                 <label>Avatar / Foto de Perfil</label>
                 {personalFormData.avatar && (
-                  <div style={{ marginBottom: '15px' }}>
-                    <img 
-                      src={personalFormData.avatar} 
-                      alt="Avatar actual" 
-                      style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #667eea' }}
-                    />
+                  <div className="avatar-preview">
+                    <img src={personalFormData.avatar} alt="Avatar actual" />
                   </div>
                 )}
                 <input
@@ -630,9 +572,7 @@ const Dashboard = () => {
                   disabled={uploading}
                 />
                 {uploading && (
-                  <div style={{ marginTop: '10px', color: '#0e7490', fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.8125rem' }}>
-                    Subiendo imagen...
-                  </div>
+                  <div className="upload-status">Subiendo imagen...</div>
                 )}
               </div>
             </div>
@@ -698,6 +638,22 @@ const Dashboard = () => {
               </button>
             </div>
 
+            <div className="featured-selector">
+              <span className="featured-selector-label">
+                <FaStar /> proyecto destacado
+              </span>
+              <select
+                value={projectItems.find((p) => p.featured)?.id || ''}
+                onChange={handleFeaturedChange}
+                disabled={savingFeatured || projectItems.length === 0}
+              >
+                <option value="">— ninguno —</option>
+                {projectItems.map((p) => (
+                  <option key={p.id} value={p.id}>{p.title || '(sin título)'}</option>
+                ))}
+              </select>
+            </div>
+
             {projectEditForm && (
               <div className="edit-form-overlay">
                 <div className="edit-form-modal">
@@ -737,12 +693,8 @@ const Dashboard = () => {
                   <div className="form-group">
                     <label>Imagen del Proyecto</label>
                     {projectEditForm.image && (
-                      <div style={{ marginBottom: '15px' }}>
-                        <img 
-                          src={projectEditForm.image} 
-                          alt="Preview" 
-                          style={{ width: '100%', maxWidth: '400px', borderRadius: '8px', objectFit: 'cover' }}
-                        />
+                      <div className="image-preview">
+                        <img src={projectEditForm.image} alt="Preview" />
                       </div>
                     )}
                     <input
@@ -753,9 +705,7 @@ const Dashboard = () => {
                       disabled={uploadingProjectImage}
                     />
                     {uploadingProjectImage && (
-                      <div style={{ marginTop: '10px', color: '#0e7490', fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.8125rem' }}>
-                        Subiendo imagen...
-                      </div>
+                      <div className="upload-status">Subiendo imagen...</div>
                     )}
                   </div>
 
@@ -767,7 +717,7 @@ const Dashboard = () => {
                       onChange={(e) => setProjectEditForm({ ...projectEditForm, github: e.target.value })}
                       placeholder="https://github.com/usuario/proyecto"
                     />
-                    <small style={{ color: '#666', fontSize: '0.85rem' }}>Déjalo vacío si no aplica</small>
+                    <small className="field-hint">Déjalo vacío si no aplica</small>
                   </div>
 
                   <div className="form-group">
@@ -778,19 +728,7 @@ const Dashboard = () => {
                       onChange={(e) => setProjectEditForm({ ...projectEditForm, demo: e.target.value })}
                       placeholder="https://demo.com"
                     />
-                    <small style={{ color: '#666', fontSize: '0.85rem' }}>Déjalo vacío si no aplica</small>
-                  </div>
-
-                  <div className="form-group">
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <input
-                        type="checkbox"
-                        checked={projectEditForm.featured || false}
-                        onChange={(e) => setProjectEditForm({ ...projectEditForm, featured: e.target.checked })}
-                      />
-                      Proyecto Destacado
-                    </label>
-                    <small style={{ color: '#f59e0b', fontSize: '0.85rem', marginTop: '5px', display: 'block' }}>Solo puede haber un proyecto destacado</small>
+                    <small className="field-hint">Déjalo vacío si no aplica</small>
                   </div>
 
                   <div className="modal-actions">
@@ -807,70 +745,39 @@ const Dashboard = () => {
 
             <div className="items-list">
               {projectItems.map((item) => (
-                <div key={item.id} className="item-card">
+                <div key={item.id} className="item-card project-card">
                   {item.image && (
-                    <img src={item.image} alt={item.title} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '8px 8px 0 0' }} />
+                    <img className="project-thumb" src={item.image} alt={item.title} />
                   )}
-                  <div style={{ padding: '15px' }}>
-                    <h4>{item.title}</h4>
+                  <div className="project-card-body">
+                    <h4>
+                      {item.title}
+                      {item.featured && <span className="featured-tag"><FaStar /> destacado</span>}
+                    </h4>
                     <p>{item.description}</p>
                     {item.technologies && item.technologies.length > 0 && (
-                      <div style={{ marginTop: '10px', marginBottom: '10px' }}>
+                      <div className="project-tech-tags">
                         {item.technologies.map((tech, idx) => (
-                          <span key={idx} style={{ display: 'inline-block', background: '#f0f0f0', padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem', marginRight: '5px', marginBottom: '5px' }}>
-                            {tech}
-                          </span>
+                          <span key={idx} className="project-tech-tag">{tech}</span>
                         ))}
                       </div>
                     )}
 
                     {(item.github || item.demo) && (
-                      <div style={{ display: 'flex', gap: '10px', marginTop: '12px', marginBottom: '12px' }}>
+                      <div className="project-links">
                         {item.github && (
-                          <a 
-                            href={item.github} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            style={{ 
-                              display: 'inline-flex', 
-                              alignItems: 'center', 
-                              gap: '5px',
-                              padding: '6px 12px', 
-                              background: '#24292e', 
-                              color: 'white', 
-                              textDecoration: 'none', 
-                              borderRadius: '6px',
-                              fontSize: '0.85rem',
-                              fontWeight: '500'
-                            }}
-                          >
-                            <FaBriefcase /> GitHub
+                          <a href={item.github} target="_blank" rel="noopener noreferrer" className="project-link project-link-github">
+                            <FaGithub /> GitHub
                           </a>
                         )}
                         {item.demo && (
-                          <a 
-                            href={item.demo} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            style={{ 
-                              display: 'inline-flex', 
-                              alignItems: 'center', 
-                              gap: '5px',
-                              padding: '6px 12px', 
-                              background: '#667eea', 
-                              color: 'white', 
-                              textDecoration: 'none', 
-                              borderRadius: '6px',
-                              fontSize: '0.85rem',
-                              fontWeight: '500'
-                            }}
-                          >
+                          <a href={item.demo} target="_blank" rel="noopener noreferrer" className="project-link project-link-demo">
                             <FaEye /> Ver Demo
                           </a>
                         )}
                       </div>
                     )}
-                    
+
                     <div className="item-actions">
                       <button onClick={() => handleEditProject(item)} className="btn btn-sm btn-primary">
                         Editar

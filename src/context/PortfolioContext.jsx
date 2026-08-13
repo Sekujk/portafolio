@@ -258,6 +258,30 @@ export const PortfolioProvider = ({ children }) => {
     return { success: true };
   };
 
+  // Marca un proyecto como destacado y desmarca cualquier otro -- centralizado
+  // acá (en vez de dejarlo como una convención dispersa en el formulario de
+  // cada proyecto) para que "solo puede haber un destacado" sea una garantía
+  // real, no una esperanza. projectId en null quita el destacado sin elegir
+  // uno nuevo.
+  const setFeaturedProject = async (projectId) => {
+    const { error: clearError } = await supabase
+      .from('projects')
+      .update({ featured: false })
+      .neq('id', '00000000-0000-0000-0000-000000000000');
+    if (clearError) throw clearError;
+
+    if (projectId) {
+      const { error: setError } = await supabase
+        .from('projects')
+        .update({ featured: true })
+        .eq('id', projectId);
+      if (setError) throw setError;
+    }
+
+    await reloadSection('projects');
+    return { success: true };
+  };
+
   const value = {
     portfolioData,
     isLoading,
@@ -266,6 +290,7 @@ export const PortfolioProvider = ({ children }) => {
     addItem,
     updateItem,
     deleteItem,
+    setFeaturedProject,
   };
 
   return (
