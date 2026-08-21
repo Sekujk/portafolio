@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaGithub, FaLinkedin, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCode, FaBriefcase, FaGraduationCap, FaExclamationTriangle, FaDatabase, FaExternalLinkAlt, FaRocket } from 'react-icons/fa';
+import { FaGithub, FaLinkedin, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCode, FaBriefcase, FaGraduationCap, FaExclamationTriangle, FaDatabase, FaExternalLinkAlt, FaRocket, FaStar, FaCodeBranch } from 'react-icons/fa';
 import { usePortfolio } from '../../context/PortfolioContext';
 import './PublicPortfolio.css';
 
@@ -34,11 +34,95 @@ const AnimatedCounter = ({ value, delay = 0 }) => {
   return count;
 };
 
+const GITHUB_USERNAME = 'Sekujk';
+
+// Trae stats reales de la API publica de GitHub (sin auth, sin backend propio).
+// Si falla (rate limit, sin conexion), simplemente no se muestra el bloque.
+const useGithubStats = (username) => {
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`https://api.github.com/users/${username}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data) {
+          setStats({
+            repos: data.public_repos,
+            followers: data.followers,
+          });
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [username]);
+
+  return stats;
+};
+
+// Trae el calendario real de contribuciones (mismo shape que usa GitHub)
+// para dibujar un heatmap propio, en vez de depender de un servicio externo
+// de imagenes que puede caerse.
+const useGithubContributions = (username) => {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`https://github-contributions-api.jogruber.de/v4/${username}?y=last`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (!cancelled && json?.contributions) setData(json);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [username]);
+
+  return data;
+};
+
+// Agrupa el array plano de dias en columnas semanales (7 filas x N semanas),
+// tal como se ve el calendario de contribuciones real de GitHub.
+const buildContributionWeeks = (contributions) => {
+  if (!contributions?.length) return [];
+  const first = new Date(contributions[0].date);
+  const leadingBlanks = first.getDay();
+  const days = [...Array(leadingBlanks).fill(null), ...contributions];
+  const weeks = [];
+  for (let i = 0; i < days.length; i += 7) {
+    weeks.push(days.slice(i, i + 7));
+  }
+  return weeks;
+};
+
+const GithubHeatmap = ({ data }) => {
+  const weeks = buildContributionWeeks(data.contributions);
+  return (
+    <div className="github-chart-wrapper">
+      <div className="github-heatmap">
+        {weeks.map((week, wi) => (
+          <div className="github-heatmap-col" key={wi}>
+            {week.map((day, di) => (
+              <div
+                key={di}
+                className={`github-heatmap-cell${day ? ` level-${day.level}` : ' is-blank'}`}
+                title={day ? `${day.count} contribuciones · ${day.date}` : undefined}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+      <p className="github-heatmap-caption">{data.total?.lastYear ?? 0} contribuciones en el último año</p>
+    </div>
+  );
+};
+
 const PublicPortfolio = () => {
   const { portfolioData, isLoading, connectionError } = usePortfolio();
   const [avatarError, setAvatarError] = useState(false);
   const [featuredImageError, setFeaturedImageError] = useState(false);
   const [brokenProjectImages, setBrokenProjectImages] = useState({});
+  const githubStats = useGithubStats(GITHUB_USERNAME);
+  const githubContributions = useGithubContributions(GITHUB_USERNAME);
 
   if (!isLoading && (connectionError || !portfolioData)) {
     return (
@@ -423,13 +507,44 @@ const PublicPortfolio = () => {
                 </div>
               </motion.div>
             )}
+
+            <motion.div
+              className="bento-item bento-github"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+            >
+              <h2 className="bento-title"><FaGithub style={{ marginRight: '10px', verticalAlign: 'middle' }} />Actividad en GitHub</h2>
+              {githubStats && (
+                <div className="github-stats-row">
+                  <div className="github-stat">
+                    <FaCodeBranch />
+                    <span>{githubStats.repos} repos públicos</span>
+                  </div>
+                  <div className="github-stat">
+                    <FaStar />
+                    <span>{githubStats.followers} seguidores</span>
+                  </div>
+                </div>
+              )}
+              {githubContributions && <GithubHeatmap data={githubContributions} />}
+              <a
+                href={`https://github.com/${GITHUB_USERNAME}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="github-profile-link"
+              >
+                Ver perfil completo <FaExternalLinkAlt size={11} />
+              </a>
+            </motion.div>
           </div>
         </div>
       </section>
 
       {(() => {
         // Excluye solo el proyecto que efectivamente se muestra como destacado
-        // (por id), no "todos los featured" -- así, si alguna vez hay más de un
+        // (por id), no "todos los featured": así, si alguna vez hay más de un
         // proyecto marcado como featured (nada en la base de datos lo impide,
         // solo una convención en el Dashboard), ninguno desaparece de la
         // página: el resto simplemente cae en esta lista en vez de perderse.
