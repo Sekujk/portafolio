@@ -135,6 +135,70 @@ const GithubHeatmap = ({ data }) => {
   );
 };
 
+const NAV_SECTIONS = [
+  { id: 'inicio', label: 'Inicio' },
+  { id: 'stack', label: 'Stack' },
+  { id: 'proyectos', label: 'Proyectos' },
+  { id: 'educacion', label: 'Educación' },
+  { id: 'github', label: 'GitHub' },
+  { id: 'contacto', label: 'Contacto' },
+];
+
+const getInitials = (name) => (name || '')
+  .split(' ')
+  .filter(Boolean)
+  .slice(0, 2)
+  .map((word) => word[0])
+  .join('')
+  .toUpperCase();
+
+// Nav fija que sabe en que seccion estas (IntersectionObserver) y se
+// compacta/oscurece al hacer scroll, en vez de ser una barra estatica.
+const QuickNav = ({ name }) => {
+  const [activeId, setActiveId] = useState('inicio');
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 60);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    const sections = NAV_SECTIONS.map((s) => document.getElementById(s.id)).filter(Boolean);
+    if (sections.length === 0) return undefined;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) setActiveId(entry.target.id);
+        });
+      },
+      { rootMargin: '-15% 0px -70% 0px', threshold: 0 },
+    );
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <nav className={`quick-nav${scrolled ? ' scrolled' : ''}`} aria-label="Navegación rápida">
+      <a href="#inicio" className="quick-nav-brand">{getInitials(name)}</a>
+      <div className="quick-nav-links">
+        {NAV_SECTIONS.map((section) => (
+          <a
+            key={section.id}
+            href={`#${section.id}`}
+            className={activeId === section.id ? 'active' : ''}
+          >
+            {section.label}
+          </a>
+        ))}
+      </div>
+    </nav>
+  );
+};
+
 const PublicPortfolio = () => {
   const { portfolioData, isLoading, connectionError } = usePortfolio();
   const [avatarError, setAvatarError] = useState(false);
@@ -258,14 +322,7 @@ const PublicPortfolio = () => {
 
   return (
     <div className="public-portfolio">
-      <nav className="quick-nav" aria-label="Navegación rápida">
-        <a href="#inicio">Inicio</a>
-        <a href="#stack">Stack</a>
-        <a href="#proyectos">Proyectos</a>
-        <a href="#educacion">Educación</a>
-        <a href="#github">GitHub</a>
-        <a href="#contacto">Contacto</a>
-      </nav>
+      <QuickNav name={personalInfo.name} />
 
       <section className="hero-section" id="inicio">
         <div className="hero-grid">
