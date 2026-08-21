@@ -1,6 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaGithub, FaLinkedin, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCode, FaBriefcase, FaGraduationCap, FaExclamationTriangle, FaDatabase, FaExternalLinkAlt, FaRocket, FaStar, FaCodeBranch } from 'react-icons/fa';
+import { SiPython, SiPostgresql, SiDocker, SiGithubactions, SiSupabase, SiPrefect, SiReact, SiExpo } from 'react-icons/si';
+
+// Icono real por tecnologia (coincidencia por nombre, sin distinguir mayusculas).
+// Si una tecnologia no esta mapeada, cae al icono generico FaCode.
+const TECH_ICONS = {
+  python: SiPython,
+  postgresql: SiPostgresql,
+  docker: SiDocker,
+  'github actions': SiGithubactions,
+  supabase: SiSupabase,
+  prefect: SiPrefect,
+  'react native': SiReact,
+  expo: SiExpo,
+};
+
+const TechIcon = ({ name }) => {
+  const Icon = TECH_ICONS[name.toLowerCase()] || FaCode;
+  return <Icon />;
+};
 import { usePortfolio } from '../../context/PortfolioContext';
 import './PublicPortfolio.css';
 
@@ -123,6 +142,7 @@ const PublicPortfolio = () => {
   const [brokenProjectImages, setBrokenProjectImages] = useState({});
   const githubStats = useGithubStats(GITHUB_USERNAME);
   const githubContributions = useGithubContributions(GITHUB_USERNAME);
+  const [activeSkillCategory, setActiveSkillCategory] = useState(null);
 
   if (!isLoading && (connectionError || !portfolioData)) {
     return (
@@ -233,6 +253,8 @@ const PublicPortfolio = () => {
   }
 
   const { personalInfo, education, experience, skills, projects, certifications } = portfolioData;
+  const skillCategories = skills ? Object.keys(skills) : [];
+  const currentSkillCategory = skillCategories.includes(activeSkillCategory) ? activeSkillCategory : skillCategories[0];
 
   return (
     <div className="public-portfolio">
@@ -378,34 +400,42 @@ const PublicPortfolio = () => {
               viewport={{ once: true }}
             >
               <h2 className="bento-title">💻 Stack Técnico</h2>
-              <div className="skills-compact">
-                {skills && Object.entries(skills).map(([category, skillList], rowIndex) => (
+              {skills && (
+                <>
+                  <div className="skill-tabs">
+                    {skillCategories.map((category) => (
+                      <button
+                        key={category}
+                        type="button"
+                        className={`skill-tab${category === currentSkillCategory ? ' active' : ''}`}
+                        onClick={() => setActiveSkillCategory(category)}
+                      >
+                        {category}
+                        <span className="skill-tab-count">{skills[category].length}</span>
+                      </button>
+                    ))}
+                  </div>
                   <motion.div
-                    key={category}
-                    className="skill-row"
-                    initial={{ opacity: 0, x: -12 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.35, delay: rowIndex * 0.1 }}
+                    key={currentSkillCategory}
+                    className="skill-pills"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25 }}
                   >
-                    <span className="skill-category-label">{category}</span>
-                    <div className="skill-pills">
-                      {skillList.map((skill, i) => (
-                        <motion.span
-                          key={i}
-                          className="skill-pill"
-                          initial={{ opacity: 0, scale: 0.85 }}
-                          whileInView={{ opacity: 1, scale: 1 }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 0.25, delay: rowIndex * 0.1 + i * 0.05 }}
-                        >
-                          {skill}
-                        </motion.span>
-                      ))}
-                    </div>
+                    {(skills[currentSkillCategory] || []).map((skill, i) => (
+                      <motion.span
+                        key={skill}
+                        className="skill-pill"
+                        initial={{ opacity: 0, scale: 0.85 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.2, delay: i * 0.03 }}
+                      >
+                        {skill}
+                      </motion.span>
+                    ))}
                   </motion.div>
-                ))}
-              </div>
+                </>
+              )}
             </motion.div>
 
             {projects && projects.find(p => p.featured) && (
@@ -421,7 +451,6 @@ const PublicPortfolio = () => {
                   const featuredProject = projects.find(p => p.featured);
                   return (
                     <>
-                      <div className="featured-label">Proyecto Destacado</div>
                       {featuredProject.image && !featuredImageError ? (
                         <img
                           src={featuredProject.image}
@@ -430,18 +459,19 @@ const PublicPortfolio = () => {
                           onError={() => setFeaturedImageError(true)}
                         />
                       ) : (
-                        <div className="featured-placeholder">
-                          <FaRocket className="featured-placeholder-icon" />
+                        <div className="featured-label-row">
+                          <FaRocket />
+                          <span>Proyecto Destacado</span>
                         </div>
                       )}
                       <div className="featured-content">
                         <h3>{featuredProject.title}</h3>
-                        <p>{featuredProject.description}</p>
                         <div className="featured-tech">
                           {featuredProject.technologies.map((tech, i) => (
-                            <span key={i}>{tech}</span>
+                            <span key={i}><TechIcon name={tech} /> {tech}</span>
                           ))}
                         </div>
+                        <p>{featuredProject.description}</p>
                         <div className="featured-links">
                           {featuredProject.github && (
                             <a href={featuredProject.github} target="_blank" rel="noopener noreferrer">
