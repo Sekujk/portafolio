@@ -236,7 +236,16 @@ const PublicPortfolio = () => {
 
   return (
     <div className="public-portfolio">
-      <section className="hero-section">
+      <nav className="quick-nav" aria-label="Navegación rápida">
+        <a href="#inicio">Inicio</a>
+        <a href="#stack">Stack</a>
+        <a href="#proyectos">Proyectos</a>
+        <a href="#educacion">Educación</a>
+        <a href="#github">GitHub</a>
+        <a href="#contacto">Contacto</a>
+      </nav>
+
+      <section className="hero-section" id="inicio">
         <div className="hero-grid">
           <motion.div
             className="hero-left"
@@ -362,6 +371,7 @@ const PublicPortfolio = () => {
         <div className="container">
           <div className="bento-grid">
             <motion.div
+              id="stack"
               className="bento-item bento-skills"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -400,6 +410,7 @@ const PublicPortfolio = () => {
 
             {projects && projects.find(p => p.featured) && (
               <motion.div
+                id="proyectos"
                 className="bento-item bento-featured-project"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -452,6 +463,7 @@ const PublicPortfolio = () => {
 
             {((education && education.length > 0) || (experience && experience.length > 0)) && (
               <motion.div
+                id="educacion"
                 className="bento-item bento-edu-exp"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -509,6 +521,7 @@ const PublicPortfolio = () => {
             )}
 
             <motion.div
+              id="github"
               className="bento-item bento-github"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -663,7 +676,7 @@ const PublicPortfolio = () => {
         </section>
       )}
 
-      <section className="cta-section">
+      <section className="cta-section" id="contacto">
         <div className="container">
           <motion.div
             className="cta-content"

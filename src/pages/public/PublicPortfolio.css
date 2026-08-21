@@ -38,6 +38,46 @@
 
 html {
   overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+#inicio, #stack, #proyectos, #educacion, #github, #contacto {
+  scroll-margin-top: 76px;
+}
+
+.quick-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  gap: 1.75rem;
+  padding: 0.9rem 1.5rem;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.quick-nav a {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+.quick-nav a:hover {
+  color: var(--primary-light);
+}
+
+@media (max-width: 640px) {
+  .quick-nav {
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+    justify-content: flex-start;
+  }
 }
 
 body {
