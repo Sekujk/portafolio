@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useSpring } from 'framer-motion';
 import { FaGithub, FaLinkedin, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCode, FaBriefcase, FaGraduationCap, FaExclamationTriangle, FaDatabase, FaExternalLinkAlt, FaRocket, FaStar, FaCodeBranch } from 'react-icons/fa';
 import { SiPython, SiPostgresql, SiDocker, SiGithubactions, SiSupabase, SiPrefect, SiReact, SiExpo } from 'react-icons/si';
 
@@ -152,18 +152,14 @@ const getInitials = (name) => (name || '')
   .join('')
   .toUpperCase();
 
-// Nav fija que sabe en que seccion estas (IntersectionObserver) y se
-// compacta/oscurece al hacer scroll, en vez de ser una barra estatica.
+// Nav flotante tipo "dock": sabe en que seccion estas (IntersectionObserver),
+// desliza un indicador animado al link activo (framer-motion layoutId) y
+// hace scroll suave por JS en vez de dejar que el navegador ensucie la URL
+// con el hash de cada seccion (#educacion, etc).
 const QuickNav = ({ name }) => {
   const [activeId, setActiveId] = useState('inicio');
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 60);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  const { scrollYProgress } = useScroll();
+  const progress = useSpring(scrollYProgress, { stiffness: 200, damping: 30, restDelta: 0.001 });
 
   useEffect(() => {
     const sections = NAV_SECTIONS.map((s) => document.getElementById(s.id)).filter(Boolean);
@@ -181,21 +177,35 @@ const QuickNav = ({ name }) => {
     return () => observer.disconnect();
   }, []);
 
+  const handleJump = (e, id) => {
+    e.preventDefault();
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
-    <nav className={`quick-nav${scrolled ? ' scrolled' : ''}`} aria-label="Navegación rápida">
-      <a href="#inicio" className="quick-nav-brand">{getInitials(name)}</a>
-      <div className="quick-nav-links">
-        {NAV_SECTIONS.map((section) => (
-          <a
-            key={section.id}
-            href={`#${section.id}`}
-            className={activeId === section.id ? 'active' : ''}
-          >
-            {section.label}
-          </a>
-        ))}
+    <>
+      <motion.div className="scroll-progress" style={{ scaleX: progress }} />
+      <div className="quick-nav-shell">
+        <a href="#inicio" onClick={(e) => handleJump(e, 'inicio')} className="quick-nav-brand">
+          {getInitials(name)}
+        </a>
+        <nav className="quick-nav" aria-label="Navegación rápida">
+          {NAV_SECTIONS.map((section) => (
+            <a
+              key={section.id}
+              href={`#${section.id}`}
+              onClick={(e) => handleJump(e, section.id)}
+              className={`quick-nav-link${activeId === section.id ? ' active' : ''}`}
+            >
+              {activeId === section.id && (
+                <motion.span className="quick-nav-pill" layoutId="quick-nav-pill" transition={{ type: 'spring', stiffness: 380, damping: 32 }} />
+              )}
+              <span className="quick-nav-link-label">{section.label}</span>
+            </a>
+          ))}
+        </nav>
       </div>
-    </nav>
+    </>
   );
 };
 
