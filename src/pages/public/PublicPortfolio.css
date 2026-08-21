@@ -433,7 +433,7 @@ body {
 
 .bento-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 1.5rem;
   grid-auto-flow: dense;
 }
@@ -446,8 +446,33 @@ body {
 
 .github-stats-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.github-languages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   margin-bottom: 1.25rem;
+}
+
+.github-lang-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.7rem;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.github-lang-pill svg {
+  color: var(--primary-color);
 }
 
 .github-stat {
@@ -524,6 +549,7 @@ body {
   padding: 2.25rem;
   border: 1px solid var(--border-color);
   transition: border-color 0.25s ease, transform 0.25s ease;
+  min-width: 0;
 }
 
 .bento-item:hover {
@@ -892,7 +918,7 @@ body {
 
 .projects-masonry {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 350px), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 2rem;
 }
 
@@ -1459,6 +1485,31 @@ body {
     height: 180px;
   }
 
+  /* Las categorias del stack son varias y algunas tienen nombres largos:
+     en vez de que las pills envuelvan en 4-5 filas y ocupen media
+     pantalla, quedan en una sola fila con scroll horizontal. */
+  .skill-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.85rem;
+  }
+
+  .skill-tab {
+    flex-shrink: 0;
+  }
+
+  .github-heatmap-cell {
+    width: 8px;
+    height: 8px;
+  }
+
+  .github-stats-row {
+    gap: 1rem;
+  }
+
+  .github-stat {
+    font-size: 0.78rem;
+  }
 }
 
 @media (max-width: 480px) {

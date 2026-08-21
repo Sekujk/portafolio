@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, useScroll, useSpring } from 'framer-motion';
-import { FaGithub, FaLinkedin, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCode, FaBriefcase, FaGraduationCap, FaExclamationTriangle, FaDatabase, FaExternalLinkAlt, FaRocket, FaStar, FaCodeBranch } from 'react-icons/fa';
-import { SiPython, SiPostgresql, SiDocker, SiGithubactions, SiSupabase, SiPrefect, SiReact, SiExpo } from 'react-icons/si';
+import { FaGithub, FaLinkedin, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCode, FaBriefcase, FaGraduationCap, FaExclamationTriangle, FaDatabase, FaExternalLinkAlt, FaRocket, FaStar, FaCodeBranch, FaCalendarAlt } from 'react-icons/fa';
+import { SiPython, SiPostgresql, SiDocker, SiGithubactions, SiSupabase, SiPrefect, SiReact, SiExpo, SiJavascript, SiPhp, SiOpenjdk, SiTypescript, SiHtml5, SiCss3 } from 'react-icons/si';
 
 // Icono real por tecnologia (coincidencia por nombre, sin distinguir mayusculas).
 // Si una tecnologia no esta mapeada, cae al icono generico FaCode.
@@ -14,6 +14,12 @@ const TECH_ICONS = {
   prefect: SiPrefect,
   'react native': SiReact,
   expo: SiExpo,
+  javascript: SiJavascript,
+  typescript: SiTypescript,
+  php: SiPhp,
+  java: SiOpenjdk,
+  html: SiHtml5,
+  css: SiCss3,
 };
 
 const TechIcon = ({ name }) => {
@@ -57,20 +63,33 @@ const GITHUB_USERNAME = 'Sekujk';
 
 // Trae stats reales de la API publica de GitHub (sin auth, sin backend propio).
 // Si falla (rate limit, sin conexion), simplemente no se muestra el bloque.
+// Ademas de perfil, junta los lenguajes mas usados a partir de los repos
+// publicos reales (no una lista puesta a mano).
 const useGithubStats = (username) => {
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`https://api.github.com/users/${username}`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (!cancelled && data) {
-          setStats({
-            repos: data.public_repos,
-            followers: data.followers,
-          });
-        }
+    Promise.all([
+      fetch(`https://api.github.com/users/${username}`).then((res) => (res.ok ? res.json() : null)),
+      fetch(`https://api.github.com/users/${username}/repos?per_page=100&sort=updated`).then((res) => (res.ok ? res.json() : [])),
+    ])
+      .then(([user, repos]) => {
+        if (cancelled || !user) return;
+        const langCount = {};
+        (repos || []).forEach((r) => {
+          if (r.language) langCount[r.language] = (langCount[r.language] || 0) + 1;
+        });
+        const topLanguages = Object.entries(langCount)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 4)
+          .map(([lang]) => lang);
+        setStats({
+          repos: user.public_repos,
+          followers: user.followers,
+          memberSince: user.created_at ? new Date(user.created_at).getFullYear() : null,
+          topLanguages,
+        });
       })
       .catch(() => {});
     return () => { cancelled = true; };
@@ -627,16 +646,31 @@ const PublicPortfolio = () => {
             >
               <h2 className="bento-title"><FaGithub style={{ marginRight: '10px', verticalAlign: 'middle' }} />Actividad en GitHub</h2>
               {githubStats && (
-                <div className="github-stats-row">
-                  <div className="github-stat">
-                    <FaCodeBranch />
-                    <span>{githubStats.repos} repos públicos</span>
+                <>
+                  <div className="github-stats-row">
+                    <div className="github-stat">
+                      <FaCodeBranch />
+                      <span>{githubStats.repos} repos públicos</span>
+                    </div>
+                    <div className="github-stat">
+                      <FaStar />
+                      <span>{githubStats.followers} seguidores</span>
+                    </div>
+                    {githubStats.memberSince && (
+                      <div className="github-stat">
+                        <FaCalendarAlt />
+                        <span>en GitHub desde {githubStats.memberSince}</span>
+                      </div>
+                    )}
                   </div>
-                  <div className="github-stat">
-                    <FaStar />
-                    <span>{githubStats.followers} seguidores</span>
-                  </div>
-                </div>
+                  {githubStats.topLanguages.length > 0 && (
+                    <div className="github-languages">
+                      {githubStats.topLanguages.map((lang) => (
+                        <span key={lang} className="github-lang-pill"><TechIcon name={lang} /> {lang}</span>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
               {githubContributions && <GithubHeatmap data={githubContributions} />}
               <a
