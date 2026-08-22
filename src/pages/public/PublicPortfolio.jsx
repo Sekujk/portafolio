@@ -342,7 +342,18 @@ const PublicPortfolio = () => {
   }
 
   if (isLoading || !portfolioData) {
-    return null;
+    return (
+      <div className="page-loader">
+        <motion.div
+          className="page-loader-badge"
+          animate={{ scale: [1, 1.08, 1], opacity: [0.85, 1, 0.85] }}
+          transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          AS
+        </motion.div>
+        <div className="page-loader-spinner" />
+      </div>
+    );
   }
 
   const { personalInfo, education, experience, skills, projects, certifications } = portfolioData;
