@@ -125,11 +125,12 @@ export const PortfolioProvider = ({ children }) => {
     loadPortfolioData();
   }, []);
 
-  const loadPortfolioData = async () => {
-    try {
+  const loadPortfolioData = async (isRetry = false) => {
+    if (!isRetry) {
       setIsLoading(true);
       setConnectionError(null);
-
+    }
+    try {
       const [personalRes, educationRes, experienceRes, skillsRes, projectsRes, certificationsRes] = await Promise.all([
         supabase.from('personal_info').select('*').eq('id', PERSONAL_INFO_ID).single(),
         supabase.from('education').select('*').order('order_index'),
@@ -151,12 +152,23 @@ export const PortfolioProvider = ({ children }) => {
         projects: (projectsRes.data || []).map(mapProjectFromDb),
         certifications: (certificationsRes.data || []).map(mapCertificationFromDb),
       });
+      setConnectionError(null);
+      setIsLoading(false);
       console.log('Datos cargados desde Supabase');
     } catch (error) {
       console.error('ERROR DE CONEXIÓN A SUPABASE:', error);
+      // Primer intento fallido: en carga en frio, el cliente de Supabase a
+      // veces tropieza con la sesion guardada en localStorage (desfase de
+      // reloj -- "JWT issued at future" -- u otro glitch de arranque) y se
+      // resuelve solo con un segundo intento, como al hacer F5 a mano.
+      // Reintentamos una vez en silencio (sin mostrar el error) antes de
+      // rendirnos de verdad.
+      if (!isRetry) {
+        setTimeout(() => loadPortfolioData(true), 700);
+        return;
+      }
       setConnectionError(error.message || 'No se pudo conectar a Supabase. Verifica tu configuración.');
       setPortfolioData(null);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -258,7 +270,7 @@ export const PortfolioProvider = ({ children }) => {
     return { success: true };
   };
 
-  // Marca un proyecto como destacado y desmarca cualquier otro -- centralizado
+  // Marca un proyecto como destacado y desmarca cualquier otro: centralizado
   // acá (en vez de dejarlo como una convención dispersa en el formulario de
   // cada proyecto) para que "solo puede haber un destacado" sea una garantía
   // real, no una esperanza. projectId en null quita el destacado sin elegir
