@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "src/pages/public/PublicPortfolio.css"
+        ],
+        "createdAt": "2026-09-17T05:41:31.870Z",
+        "reason": "user confirmed: wants to keep the gradient hero title as-is, not an AI artifact to fix"
+      }
+    ]
+  }
+}

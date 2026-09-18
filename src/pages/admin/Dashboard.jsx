@@ -1,0 +1,975 @@
+import React, { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import {
+  FaUser, FaGraduationCap, FaBriefcase, FaTools, FaProjectDiagram,
+  FaCertificate, FaSignOutAlt, FaKey, FaSave, FaTrash, FaPlus, FaEye,
+  FaStar, FaGithub, FaExternalLinkAlt, FaExclamationTriangle, FaDatabase
+} from 'react-icons/fa';
+import { useAuth } from '../../context/AuthContext';
+import { usePortfolio } from '../../context/PortfolioContext';
+import { supabase } from '../../config/supabase';
+import './Dashboard.css';
+
+// Componente memoizado para cada input de skill (FUERA del Dashboard para que React.memo funcione)
+const SkillInput = React.memo(({ category, value, onChange }) => {
+  return (
+    <div className="form-group">
+      <label>{category.charAt(0).toUpperCase() + category.slice(1)}</label>
+      <input
+        type="text"
+        name={category}
+        value={value}
+        onChange={onChange}
+        placeholder="Separadas por comas"
+        autoComplete="off"
+      />
+    </div>
+  );
+}, (prevProps, nextProps) => {
+  // Solo re-renderizar si el valor o la categoría cambian
+  return prevProps.category === nextProps.category && prevProps.value === nextProps.value;
+});
+SkillInput.displayName = 'SkillInput';
+
+const getProjectRef = () => {
+  try {
+    return new URL(import.meta.env.VITE_SUPABASE_URL).hostname.split('.')[0];
+  } catch {
+    return 'unknown';
+  }
+};
+
+const Dashboard = () => {
+  const { logout, changePassword } = useAuth();
+  const { portfolioData, isLoading, connectionError, updateSection, addItem, updateItem, deleteItem, setFeaturedProject } = usePortfolio();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('personal');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [editingItem, setEditingItem] = useState(null);
+  
+  // Estado del formulario personal movido al nivel del Dashboard para persistir
+  const [personalFormData, setPersonalFormData] = useState(portfolioData?.personalInfo || {});
+  const [uploading, setUploading] = useState(false);
+  const [fileInputKey, setFileInputKey] = useState(Date.now());
+
+  // Estado del formulario de proyectos para persistir durante upload
+  const [projectEditForm, setProjectEditForm] = useState(null);
+  const [projectIsAdding, setProjectIsAdding] = useState(false);
+  const [uploadingProjectImage, setUploadingProjectImage] = useState(false);
+  const [projectImageKey, setProjectImageKey] = useState(Date.now());
+  const [projectItems, setProjectItems] = useState(portfolioData?.projects || []);
+  const [savingFeatured, setSavingFeatured] = useState(false);
+
+  // Estado del formulario de skills para persistir
+  const [skillsFormData, setSkillsFormData] = useState(portfolioData?.skills || {});
+  // Estado para los inputs de skills (strings mientras el usuario edita)
+  const [skillsInputStrings, setSkillsInputStrings] = useState(() => {
+    const strings = {};
+    const skills = portfolioData?.skills || {};
+    Object.entries(skills).forEach(([category, skillArray]) => {
+      strings[category] = Array.isArray(skillArray) ? skillArray.join(', ') : '';
+    });
+    return strings;
+  });
+
+  React.useEffect(() => {
+    if (portfolioData?.personalInfo) {
+      setPersonalFormData(portfolioData.personalInfo);
+    }
+  }, [portfolioData?.personalInfo]);
+
+  React.useEffect(() => {
+    if (portfolioData?.projects) {
+      setProjectItems(portfolioData.projects);
+    }
+  }, [portfolioData?.projects]);
+
+  React.useEffect(() => {
+    if (portfolioData?.skills) {
+      setSkillsFormData(portfolioData.skills);
+      const strings = {};
+      Object.entries(portfolioData.skills).forEach(([category, skillArray]) => {
+        strings[category] = Array.isArray(skillArray) ? skillArray.join(', ') : '';
+      });
+      setSkillsInputStrings(strings);
+    }
+  }, [portfolioData?.skills]);
+
+  const showSuccess = (message) => {
+    setSuccessMessage(message);
+    setErrorMessage('');
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
+  const showError = (message) => {
+    setErrorMessage(message);
+    setSuccessMessage('');
+    setTimeout(() => setErrorMessage(''), 5000);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/admin');
+  };
+
+  const handleViewPortfolio = () => {
+    window.open('/', '_blank');
+  };
+
+  // Skills handlers con useCallback
+  const handleAddSkillCategory = useCallback(() => {
+    const categoryName = prompt('Nombre de la nueva categoría:');
+    if (categoryName) {
+      const categoryKey = categoryName.toLowerCase();
+      setSkillsFormData(prev => ({ ...prev, [categoryKey]: [] }));
+      setSkillsInputStrings(prev => ({ ...prev, [categoryKey]: '' }));
+    }
+  }, []);
+
+  const handleUpdateSkills = useCallback((e) => {
+    const category = e.target.name;
+    const value = e.target.value;
+    setSkillsInputStrings(prev => ({ ...prev, [category]: value }));
+  }, []);
+
+  const handleSkillsSubmit = (e) => {
+    e.preventDefault();
+    const skillsToSave = {};
+    Object.entries(skillsInputStrings).forEach(([category, skillString]) => {
+      skillsToSave[category] = skillString
+        .split(',')
+        .map(s => s.trim())
+        .filter(s => s);
+    });
+    updateSection('skills', skillsToSave);
+    showSuccess('Habilidades actualizadas');
+  };
+
+  // Funciones para manejar proyectos
+  const handleAddProject = () => {
+    const newProject = {
+      title: '',
+      description: '',
+      technologies: [],
+      image: '',
+      github: '',
+      demo: '',
+      featured: false
+    };
+    setProjectEditForm(newProject);
+    setProjectIsAdding(true);
+  };
+
+  const handleEditProject = (item) => {
+    setProjectEditForm(item);
+    setProjectIsAdding(false);
+  };
+
+  const handleSaveProject = () => {
+    // "featured" ya no se decide acá -- lo controla el selector único de
+    // arriba (setFeaturedProject), que es la única fuente de verdad.
+    const projectToSave = { ...projectEditForm };
+
+    if (projectIsAdding) {
+      addItem('projects', projectToSave);
+      showSuccess('Proyecto agregado');
+    } else {
+      updateItem('projects', projectToSave.id, projectToSave);
+      showSuccess('Proyecto actualizado');
+    }
+    setProjectEditForm(null);
+    setProjectIsAdding(false);
+    setProjectItems(portfolioData?.projects || []);
+    setProjectImageKey(Date.now());
+  };
+
+  const handleFeaturedChange = async (e) => {
+    const projectId = e.target.value || null;
+    setSavingFeatured(true);
+    try {
+      await setFeaturedProject(projectId);
+      setProjectItems(portfolioData?.projects || []);
+      showSuccess(projectId ? 'Proyecto destacado actualizado' : 'Ya no hay proyecto destacado');
+    } catch (error) {
+      showError(error.message || 'No se pudo actualizar el proyecto destacado');
+    } finally {
+      setSavingFeatured(false);
+    }
+  };
+
+  const handleDeleteProject = (id) => {
+    if (window.confirm('¿Estás seguro de eliminar este proyecto?')) {
+      deleteItem('projects', id);
+      showSuccess('Proyecto eliminado');
+      setProjectItems(portfolioData?.projects || []);
+    }
+  };
+
+  const handleProjectImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showError('Solo se permiten archivos de imagen');
+      setProjectImageKey(Date.now());
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      showError('La imagen no debe superar 5MB');
+      setProjectImageKey(Date.now());
+      return;
+    }
+
+    setUploadingProjectImage(true);
+    
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+      const filePath = `projects/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('portfolio-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        if (uploadError.message.includes('not found') || uploadError.message.includes('does not exist')) {
+          throw new Error('El bucket "portfolio-images" no existe. Ve a Storage en Supabase y créalo como público.');
+        }
+        throw uploadError;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('portfolio-images')
+        .getPublicUrl(filePath);
+
+      setProjectEditForm(prev => ({ ...prev, image: urlData.publicUrl }));
+      showSuccess('Imagen subida correctamente');
+    } catch (error) {
+      showError(error.message || 'Error al subir la imagen');
+      setProjectImageKey(Date.now());
+    } finally {
+      setUploadingProjectImage(false);
+    }
+  };
+
+  // Funciones para manejar información personal
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showError('Solo se permiten archivos de imagen');
+      setFileInputKey(Date.now());
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      showError('La imagen no debe superar 2MB');
+      setFileInputKey(Date.now());
+      return;
+    }
+
+    setUploading(true);
+    
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('portfolio-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        if (uploadError.message.includes('not found') || uploadError.message.includes('does not exist')) {
+          throw new Error('El bucket "portfolio-images" no existe. Ve a Storage en Supabase y créalo como público.');
+        }
+        throw uploadError;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('portfolio-images')
+        .getPublicUrl(filePath);
+
+      setPersonalFormData(prev => ({ ...prev, avatar: urlData.publicUrl }));
+      showSuccess('Imagen subida correctamente');
+    } catch (error) {
+      showError(error.message || 'Error al subir la imagen');
+      setFileInputKey(Date.now());
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handlePersonalSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await updateSection('personalInfo', personalFormData);
+      showSuccess('Información personal actualizada');
+    } catch (error) {
+      showError('Error al guardar: ' + error.message);
+    }
+  };
+
+  if (!isLoading && (connectionError || !portfolioData)) {
+    return (
+      <div className="connection-error-screen">
+        <motion.div
+          className="connection-error-card"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="connection-error-tag">connection.failed</div>
+          <h1>No se puede acceder al Dashboard</h1>
+          <p>{connectionError || 'Error de conexión con Supabase'}</p>
+          <div className="connection-error-requirements">
+            <strong>requisitos</strong>
+            <ol>
+              <li>Archivo <code>.env</code> con credenciales correctas</li>
+              <li>Migraciones aplicadas (<code>supabase db push</code>)</li>
+              <li>Proyecto de Supabase activo</li>
+            </ol>
+          </div>
+          <div className="connection-error-actions">
+            <button onClick={() => window.location.reload()} className="btn btn-primary">
+              Reintentar
+            </button>
+            <button onClick={() => navigate('/admin')} className="btn btn-secondary">
+              Volver al login
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (isLoading || !portfolioData) {
+    return null;
+  }
+
+  const tabs = [
+    { id: 'personal', name: 'Personal', icon: <FaUser /> },
+    { id: 'education', name: 'Educación', icon: <FaGraduationCap />, count: portfolioData.education?.length ?? 0 },
+    { id: 'experience', name: 'Experiencia', icon: <FaBriefcase />, count: portfolioData.experience?.length ?? 0 },
+    { id: 'skills', name: 'Habilidades', icon: <FaTools />, count: Object.values(portfolioData.skills || {}).flat().length },
+    { id: 'projects', name: 'Proyectos', icon: <FaProjectDiagram />, count: portfolioData.projects?.length ?? 0 },
+    { id: 'certifications', name: 'Certificaciones', icon: <FaCertificate />, count: portfolioData.certifications?.length ?? 0 },
+    { id: 'security', name: 'Seguridad', icon: <FaKey /> },
+  ];
+
+  const ListEditor = ({ section, title, fields }) => {
+    const [items, setItems] = useState(portfolioData[section] || []);
+    const [isAdding, setIsAdding] = useState(false);
+    const [editForm, setEditForm] = useState(null);
+
+    const handleAdd = () => {
+      const newItem = {};
+      fields.forEach(field => {
+        newItem[field.key] = field.type === 'array' ? [] : '';
+      });
+      setEditForm(newItem);
+      setIsAdding(true);
+    };
+
+    const handleSave = () => {
+      if (isAdding) {
+        addItem(section, editForm);
+        showSuccess(`${title} agregado`);
+      } else {
+        updateItem(section, editForm.id, editForm);
+        showSuccess(`${title} actualizado`);
+      }
+      setEditForm(null);
+      setIsAdding(false);
+      setItems(portfolioData[section] || []);
+    };
+
+    const handleDelete = (id) => {
+      if (window.confirm('¿Estás seguro de eliminar este elemento?')) {
+        deleteItem(section, id);
+        showSuccess(`${title} eliminado`);
+        setItems(portfolioData[section] || []);
+      }
+    };
+
+    return (
+      <div className="list-editor">
+        <div className="list-header">
+          <h3>{title}</h3>
+          <button onClick={handleAdd} className="btn btn-primary btn-sm">
+            <FaPlus /> Agregar
+          </button>
+        </div>
+
+        {editForm && (
+          <div className="edit-form-overlay">
+            <div className="edit-form-modal">
+              <h4>{isAdding ? `Agregar ${title}` : `Editar ${title}`}</h4>
+              {fields.map(field => (
+                <div key={field.key} className="form-group">
+                  <label>{field.label}</label>
+                  {field.type === 'textarea' ? (
+                    <textarea
+                      value={editForm[field.key] || ''}
+                      onChange={(e) => setEditForm({ ...editForm, [field.key]: e.target.value })}
+                      rows="3"
+                    />
+                  ) : field.type === 'array' ? (
+                    <input
+                      type="text"
+                      value={(editForm[field.key] || []).join(', ')}
+                      onChange={(e) => setEditForm({
+                        ...editForm,
+                        [field.key]: e.target.value.split(',').map(s => s.trim())
+                      })}
+                      placeholder="Separado por comas"
+                    />
+                  ) : (
+                    <input
+                      type={field.type || 'text'}
+                      value={editForm[field.key] || ''}
+                      onChange={(e) => setEditForm({ ...editForm, [field.key]: e.target.value })}
+                    />
+                  )}
+                </div>
+              ))}
+              <div className="modal-actions">
+                <button onClick={handleSave} className="btn btn-primary">
+                  <FaSave /> Guardar
+                </button>
+                <button onClick={() => { setEditForm(null); setIsAdding(false); }} className="btn btn-secondary">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="items-list">
+          {items.length === 0 ? (
+            <p className="empty-message">No hay elementos. Haz clic en "Agregar" para crear uno.</p>
+          ) : (
+            items.map((item) => (
+              <div key={item.id} className="item-card">
+                <div className="item-content">
+                  <h4>{item.title || item.position || item.degree || item.name}</h4>
+                  <p className="item-subtitle">
+                    {item.company || item.institution || item.issuer || ''}
+                  </p>
+                  {item.period && <p className="item-period">{item.period}</p>}
+                </div>
+                <div className="item-actions">
+                  <button onClick={() => { setEditForm(item); setIsAdding(false); }} className="btn-icon">
+                    Editar
+                  </button>
+                  <button onClick={() => handleDelete(item.id)} className="btn-icon btn-danger">
+                    <FaTrash />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'personal':
+        return (
+          <form onSubmit={handlePersonalSubmit} className="editor-form">
+            <h3>Información Personal</h3>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Nombre Completo</label>
+                <input
+                  type="text"
+                  value={personalFormData.name}
+                  onChange={(e) => setPersonalFormData({ ...personalFormData, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Título Profesional</label>
+                <input
+                  type="text"
+                  value={personalFormData.title}
+                  onChange={(e) => setPersonalFormData({ ...personalFormData, title: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  value={personalFormData.email}
+                  onChange={(e) => setPersonalFormData({ ...personalFormData, email: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Teléfono</label>
+                <input
+                  type="tel"
+                  value={personalFormData.phone}
+                  onChange={(e) => setPersonalFormData({ ...personalFormData, phone: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Ubicación</label>
+                <input
+                  type="text"
+                  value={personalFormData.location}
+                  onChange={(e) => setPersonalFormData({ ...personalFormData, location: e.target.value })}
+                />
+              </div>
+              <div className="form-group full-width">
+                <label>Biografía</label>
+                <textarea
+                  value={personalFormData.bio}
+                  onChange={(e) => setPersonalFormData({ ...personalFormData, bio: e.target.value })}
+                  rows="4"
+                />
+              </div>
+              <div className="form-group">
+                <label>GitHub</label>
+                <input
+                  type="url"
+                  value={personalFormData.github}
+                  onChange={(e) => setPersonalFormData({ ...personalFormData, github: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>LinkedIn</label>
+                <input
+                  type="url"
+                  value={personalFormData.linkedin}
+                  onChange={(e) => setPersonalFormData({ ...personalFormData, linkedin: e.target.value })}
+                />
+              </div>
+              <div className="form-group full-width">
+                <label>Avatar / Foto de Perfil</label>
+                {personalFormData.avatar && (
+                  <div className="avatar-preview">
+                    <img src={personalFormData.avatar} alt="Avatar actual" />
+                  </div>
+                )}
+                <input
+                  key={fileInputKey}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  disabled={uploading}
+                />
+                {uploading && (
+                  <div className="upload-status">Subiendo imagen...</div>
+                )}
+              </div>
+            </div>
+            <button type="submit" className="btn btn-primary">
+              <FaSave /> Guardar Cambios
+            </button>
+          </form>
+        );
+      case 'education':
+        return <ListEditor
+          section="education"
+          title="Educación"
+          fields={[
+            { key: 'institution', label: 'Institución', type: 'text' },
+            { key: 'degree', label: 'Título', type: 'text' },
+            { key: 'period', label: 'Período', type: 'text' },
+            { key: 'description', label: 'Descripción', type: 'textarea' }
+          ]}
+        />;
+      case 'experience':
+        return <ListEditor
+          section="experience"
+          title="Experiencia"
+          fields={[
+            { key: 'company', label: 'Empresa', type: 'text' },
+            { key: 'position', label: 'Cargo', type: 'text' },
+            { key: 'period', label: 'Período', type: 'text' },
+            { key: 'description', label: 'Descripción', type: 'textarea' },
+            { key: 'achievements', label: 'Logros', type: 'array' }
+          ]}
+        />;
+      case 'skills':
+        return (
+          <form onSubmit={handleSkillsSubmit} className="editor-form">
+            <div className="list-header">
+              <h3>Habilidades por Categoría</h3>
+              <button type="button" onClick={handleAddSkillCategory} className="btn btn-primary btn-sm">
+                <FaPlus /> Nueva Categoría
+              </button>
+            </div>
+            
+            {Object.entries(skillsInputStrings).map(([category, skillString]) => (
+              <SkillInput
+                key={`skill-${category}`}
+                category={category}
+                value={skillString}
+                onChange={handleUpdateSkills}
+              />
+            ))}
+            
+            <button type="submit" className="btn btn-primary">
+              <FaSave /> Guardar Cambios
+            </button>
+          </form>
+        );
+      case 'projects':
+        return (
+          <div className="list-editor">
+            <div className="list-header">
+              <h3>Proyectos</h3>
+              <button onClick={handleAddProject} className="btn btn-primary btn-sm">
+                <FaPlus /> Agregar Proyecto
+              </button>
+            </div>
+
+            <div className="featured-selector">
+              <span className="featured-selector-label">
+                <FaStar /> proyecto destacado
+              </span>
+              <select
+                value={projectItems.find((p) => p.featured)?.id || ''}
+                onChange={handleFeaturedChange}
+                disabled={savingFeatured || projectItems.length === 0}
+              >
+                <option value="">— ninguno —</option>
+                {projectItems.map((p) => (
+                  <option key={p.id} value={p.id}>{p.title || '(sin título)'}</option>
+                ))}
+              </select>
+            </div>
+
+            {projectEditForm && (
+              <div className="edit-form-overlay">
+                <div className="edit-form-modal">
+                  <h4>{projectIsAdding ? 'Agregar Proyecto' : 'Editar Proyecto'}</h4>
+                  
+                  <div className="form-group">
+                    <label>Título</label>
+                    <input
+                      type="text"
+                      value={projectEditForm.title || ''}
+                      onChange={(e) => setProjectEditForm({ ...projectEditForm, title: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Descripción</label>
+                    <textarea
+                      value={projectEditForm.description || ''}
+                      onChange={(e) => setProjectEditForm({ ...projectEditForm, description: e.target.value })}
+                      rows="3"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Tecnologías (separadas por comas)</label>
+                    <input
+                      type="text"
+                      value={(projectEditForm.technologies || []).join(', ')}
+                      onChange={(e) => setProjectEditForm({
+                        ...projectEditForm,
+                        technologies: e.target.value.split(',').map(s => s.trim())
+                      })}
+                      placeholder="React, Node.js, MongoDB"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Imagen del Proyecto</label>
+                    {projectEditForm.image && (
+                      <div className="image-preview">
+                        <img src={projectEditForm.image} alt="Preview" />
+                      </div>
+                    )}
+                    <input
+                      key={projectImageKey}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProjectImageUpload}
+                      disabled={uploadingProjectImage}
+                    />
+                    {uploadingProjectImage && (
+                      <div className="upload-status">Subiendo imagen...</div>
+                    )}
+                  </div>
+
+                  <div className="form-group">
+                    <label>GitHub URL (opcional)</label>
+                    <input
+                      type="url"
+                      value={projectEditForm.github || ''}
+                      onChange={(e) => setProjectEditForm({ ...projectEditForm, github: e.target.value })}
+                      placeholder="https://github.com/usuario/proyecto"
+                    />
+                    <small className="field-hint">Déjalo vacío si no aplica</small>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Demo URL (opcional)</label>
+                    <input
+                      type="url"
+                      value={projectEditForm.demo || ''}
+                      onChange={(e) => setProjectEditForm({ ...projectEditForm, demo: e.target.value })}
+                      placeholder="https://demo.com"
+                    />
+                    <small className="field-hint">Déjalo vacío si no aplica</small>
+                  </div>
+
+                  <div className="modal-actions">
+                    <button onClick={handleSaveProject} className="btn btn-primary">
+                      <FaSave /> Guardar
+                    </button>
+                    <button onClick={() => { setProjectEditForm(null); setProjectIsAdding(false); setProjectImageKey(Date.now()); }} className="btn btn-secondary">
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="items-list">
+              {projectItems.map((item) => (
+                <div key={item.id} className="item-card project-card">
+                  {item.image && (
+                    <img className="project-thumb" src={item.image} alt={item.title} />
+                  )}
+                  <div className="project-card-body">
+                    <h4>
+                      {item.title}
+                      {item.featured && <span className="featured-tag"><FaStar /> destacado</span>}
+                    </h4>
+                    <p>{item.description}</p>
+                    {item.technologies && item.technologies.length > 0 && (
+                      <div className="project-tech-tags">
+                        {item.technologies.map((tech, idx) => (
+                          <span key={idx} className="project-tech-tag">{tech}</span>
+                        ))}
+                      </div>
+                    )}
+
+                    {(item.github || item.demo) && (
+                      <div className="project-links">
+                        {item.github && (
+                          <a href={item.github} target="_blank" rel="noopener noreferrer" className="project-link project-link-github">
+                            <FaGithub /> GitHub
+                          </a>
+                        )}
+                        {item.demo && (
+                          <a href={item.demo} target="_blank" rel="noopener noreferrer" className="project-link project-link-demo">
+                            <FaEye /> Ver Demo
+                          </a>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="item-actions">
+                      <button onClick={() => handleEditProject(item)} className="btn btn-sm btn-primary">
+                        Editar
+                      </button>
+                      <button onClick={() => handleDeleteProject(item.id)} className="btn btn-sm btn-danger">
+                        <FaTrash /> Eliminar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case 'certifications':
+        return <ListEditor
+          section="certifications"
+          title="Certificación"
+          fields={[
+            { key: 'name', label: 'Nombre', type: 'text' },
+            { key: 'issuer', label: 'Emisor', type: 'text' },
+            { key: 'date', label: 'Fecha', type: 'text' },
+            { key: 'credential', label: 'URL de Credencial', type: 'url' }
+          ]}
+        />;
+      case 'security':
+        return <SecurityEditor />;
+      default:
+        return null;
+    }
+  };
+
+  const SecurityEditor = () => {
+    const [passwords, setPasswords] = useState({
+      current: '',
+      new: '',
+      confirm: ''
+    });
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleChangePassword = async (e) => {
+      e.preventDefault();
+      
+      if (passwords.new !== passwords.confirm) {
+        showError('Las contraseñas nuevas no coinciden');
+        return;
+      }
+
+      if (passwords.new.length < 6) {
+        showError('La nueva contraseña debe tener al menos 6 caracteres');
+        return;
+      }
+
+      setIsLoading(true);
+      const result = await changePassword(passwords.current, passwords.new);
+      setIsLoading(false);
+
+      if (result.success) {
+        showSuccess('Contraseña actualizada correctamente');
+        setPasswords({ current: '', new: '', confirm: '' });
+      } else {
+        showError(result.error || 'Error al cambiar la contraseña');
+      }
+    };
+
+    return (
+      <div className="security-editor">
+        <h3>Cambiar Contraseña</h3>
+        <p className="section-description">
+          Actualiza tu contraseña de administrador para mantener tu portafolio seguro
+        </p>
+
+        <form onSubmit={handleChangePassword} className="editor-form">
+          <div className="form-group">
+            <label>Contraseña Actual</label>
+            <input
+              type="password"
+              value={passwords.current}
+              onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
+              placeholder="Ingresa tu contraseña actual"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Nueva Contraseña</label>
+            <input
+              type="password"
+              value={passwords.new}
+              onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
+              placeholder="Mínimo 6 caracteres"
+              required
+              minLength={6}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Confirmar Nueva Contraseña</label>
+            <input
+              type="password"
+              value={passwords.confirm}
+              onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
+              placeholder="Repite la nueva contraseña"
+              required
+            />
+          </div>
+
+          <button type="submit" className="btn btn-primary" disabled={isLoading}>
+            <FaKey /> {isLoading ? 'Cambiando...' : 'Cambiar Contraseña'}
+          </button>
+        </form>
+
+        <div className="security-info">
+          <h4>Consejos de Seguridad</h4>
+          <ul>
+            <li>Usa al menos 8 caracteres</li>
+            <li>Combina letras mayúsculas y minúsculas</li>
+            <li>Incluye números y símbolos especiales</li>
+            <li>No uses información personal obvia</li>
+            <li>Cambia tu contraseña regularmente</li>
+          </ul>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="dashboard">
+      <div className="dashboard-header">
+        <h1>Panel de Administración</h1>
+        <div className="header-actions">
+          <button onClick={handleViewPortfolio} className="btn btn-secondary">
+            <FaEye /> Ver Portafolio
+          </button>
+          <button onClick={handleLogout} className="btn btn-danger">
+            <FaSignOutAlt /> Cerrar Sesión
+          </button>
+        </div>
+      </div>
+
+      <div className="connection-strip">
+        <span className="connection-dot" />
+        <span className="connection-label">supabase</span>
+        <span className="connection-sep">/</span>
+        <span className="connection-ref">{getProjectRef()}</span>
+        <span className="connection-sep">·</span>
+        <span className="connection-label">connected</span>
+      </div>
+
+      {successMessage && (
+        <motion.div
+          className="success-banner"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+        >
+          {successMessage}
+        </motion.div>
+      )}
+
+      {errorMessage && (
+        <motion.div
+          className="error-banner"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+        >
+          {errorMessage}
+        </motion.div>
+      )}
+
+      <div className="dashboard-content">
+        <div className="sidebar">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.icon}
+              <span>{tab.name}</span>
+              {typeof tab.count === 'number' && <span className="tab-count">{tab.count}</span>}
+            </button>
+          ))}
+        </div>
+
+        <div className="main-content">
+          {renderContent()}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;
