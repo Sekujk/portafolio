@@ -192,14 +192,6 @@ const NAV_SECTIONS = [
   { id: 'contacto', label: 'Contacto' },
 ];
 
-const getInitials = (name) => (name || '')
-  .split(' ')
-  .filter(Boolean)
-  .slice(0, 2)
-  .map((word) => word[0])
-  .join('')
-  .toUpperCase();
-
 // Para proyectos sin imagen: monograma de las dos primeras palabras del
 // titulo (membership_control -> MC), en vez de repetir el mismo icono
 // generico en todas las tarjetas sin screenshot.
@@ -253,8 +245,8 @@ const QuickNav = ({ name }) => {
     <>
       <motion.div className="scroll-progress" style={{ scaleX: progress }} />
       <div className="quick-nav-shell">
-        <a href="#inicio" onClick={(e) => handleJump(e, 'inicio')} className="quick-nav-brand">
-          {getInitials(name)}
+        <a href="#inicio" onClick={(e) => handleJump(e, 'inicio')} className="quick-nav-brand" aria-label="Inicio">
+          {'>_'}
         </a>
         <nav className={`quick-nav${menuOpen ? ' is-open' : ''}`} aria-label="Navegación rápida">
           {NAV_SECTIONS.map((section) => (
