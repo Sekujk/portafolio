@@ -14,6 +14,9 @@ export const usePortfolio = () => {
 // id fijo de la fila única de personal_info (ver migración relational_redesign)
 const PERSONAL_INFO_ID = '00000000-0000-0000-0000-000000000001';
 
+const LOAD_TIMEOUT_MS = 3000;
+const AUTO_RELOAD_KEY = 'portfolio-auto-reloaded';
+
 // Mapea entre los nombres que usa la UI (heredados del modelo JSONB anterior)
 // y las columnas reales de cada tabla.
 const mapPersonalFromDb = (row) => ({
@@ -131,7 +134,7 @@ export const PortfolioProvider = ({ children }) => {
       setConnectionError(null);
     }
     try {
-      const [personalRes, educationRes, experienceRes, skillsRes, projectsRes, certificationsRes] = await Promise.all([
+      const queries = Promise.all([
         supabase.from('personal_info').select('*').eq('id', PERSONAL_INFO_ID).single(),
         supabase.from('education').select('*').order('order_index'),
         supabase.from('experience').select('*').order('order_index'),
@@ -139,6 +142,13 @@ export const PortfolioProvider = ({ children }) => {
         supabase.from('projects').select('*').order('order_index'),
         supabase.from('certifications').select('*').order('order_index'),
       ]);
+      // Si la carga se cuelga sin dar error, se trata como fallo para que
+      // entre el reintento en vez de quedarse cargando para siempre.
+      const timeout = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('La carga tardó demasiado')), LOAD_TIMEOUT_MS);
+      });
+      const [personalRes, educationRes, experienceRes, skillsRes, projectsRes, certificationsRes] =
+        await Promise.race([queries, timeout]);
 
       const firstError = [personalRes, educationRes, experienceRes, skillsRes, projectsRes, certificationsRes]
         .find((res) => res.error)?.error;
@@ -154,6 +164,7 @@ export const PortfolioProvider = ({ children }) => {
       });
       setConnectionError(null);
       setIsLoading(false);
+      try { sessionStorage.removeItem(AUTO_RELOAD_KEY); } catch { /* sin storage */ }
       console.log('Datos cargados desde Supabase');
     } catch (error) {
       console.error('ERROR DE CONEXIÓN A SUPABASE:', error);
@@ -167,6 +178,14 @@ export const PortfolioProvider = ({ children }) => {
         setTimeout(() => loadPortfolioData(true), 700);
         return;
       }
+      // Ultimo recurso: un solo recargo automatico (la bandera evita bucles).
+      try {
+        if (!sessionStorage.getItem(AUTO_RELOAD_KEY)) {
+          sessionStorage.setItem(AUTO_RELOAD_KEY, '1');
+          window.location.reload();
+          return;
+        }
+      } catch { /* sin storage: mostramos el error */ }
       setConnectionError(error.message || 'No se pudo conectar a Supabase. Verifica tu configuración.');
       setPortfolioData(null);
       setIsLoading(false);
